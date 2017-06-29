@@ -1,6 +1,12 @@
 ![](http://nginx.org/nginx.png)
 
 # BETA VERSION ACTUALY !!!!!
+[![Build Status](https://drone.xataz.net/api/badges/xataz/docker-reverse-nginx/status.svg)](https://drone.xataz.net/xataz/docker-reverse-nginx)
+[![](https://images.microbadger.com/badges/image/xataz/reverse-nginx.svg)](https://microbadger.com/images/xataz/reverse-nginx "Get your own image badge on microbadger.com")
+[![](https://images.microbadger.com/badges/version/xataz/reverse-nginx.svg)](https://microbadger.com/images/xataz/reverse-nginx "Get your own version badge on microbadger.com")
+
+> This image is build and push with [drone.io](https://github.com/drone/drone), a circle-ci like self-hosted.
+> If you don't trust, you can build yourself.
 
 ## Tag available
 * latest, mainline, 1.13.1, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
