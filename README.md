@@ -9,7 +9,7 @@
 > If you don't trust, you can build yourself.
 
 ## Tag available
-* latest, mainline, 1.13.1, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
+* latest, mainline, 1.13.2, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
 
 ## Features
 * No ROOT process
