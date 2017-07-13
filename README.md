@@ -32,7 +32,7 @@ Reverse-nginx generate for you the configuration of reverse proxy. Like traefik,
 * ARG NGINX_GPG : GPG fingerprint (default : "B0F4253373F8F6F510D42178520A9993A1C052F8")
 * ARG BUILD_CORES : Number of core use for make nginx (default : All cores)
 
-# Simply build
+### Simply build
 ```shell
 docker build -t xataz/reverse-nginx github.com/xataz/dockerfiles.git#master:reverse-nginx
 ```
