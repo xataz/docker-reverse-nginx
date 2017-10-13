@@ -30,7 +30,7 @@ f_log() {
 }
 
 f_gen_sites_enabled() {
-    if [ "${FRONTEND_SSL}" == "true" ]; then
+    if [ "${FRONTEND_SSL}" == "enable" ]; then
         template_sites=/nginx/sites-enabled/template_ssl
     else
         template_sites=/nginx/sites-enabled/template
@@ -99,7 +99,7 @@ f_make_conf() {
     FRONTEND_SSLTYPE=ec384
     BACKEND_PORT=8080
     FRONTEND_PATH="/"
-    FRONTEND_SSL=false
+    FRONTEND_SSL=disable
     FRONTEND_AUTH=""
 
     container_name=$1
@@ -160,7 +160,7 @@ mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled 
 
 
 # Generate file
-if [ "${SWARM}" == "true" ]; then
+if [ "${SWARM}" == "enable" ]; then
     for service in $(curl --unix-socket /var/run/docker.sock http://localhost/services 2> /dev/null | jq '.[].Spec.Name' | sed 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d'); do 
         CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
         if [ "${CONTAINER_LABELS}" == "" ]; then

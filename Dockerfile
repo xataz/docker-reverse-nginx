@@ -42,7 +42,7 @@ ARG NGINX_CONF="--prefix=/nginx \
 ENV UID=991 \
     GID=991 \
     EMAIL=admin@mydomain.local \
-    SWARM=false
+    SWARM=disable
 
 RUN export BUILD_DEPS="build-base \
                     libressl-dev \

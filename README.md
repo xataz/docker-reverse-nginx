@@ -46,7 +46,7 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 * UID : Choose uid for launch nginx (default : 991)
 * GID : Choose gid for launch nginx (default : 991)
 * EMAIL : Mail address for letsencrypt
-* SWARM : true if use this reverse with docker swarm mode
+* SWARM : enable if use this reverse with docker swarm mode (default : disable)
 
 ### Volumes
 * /nginx/ssl : For certificate persistance
@@ -72,7 +72,7 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 | reverse.frontend.auth | For auth basic | none | user:encryptpassword |
 | reverse.frontend.ssltype | Choose ssl type | ec384 | rsa2048, rsa4096, rsa8192, ec256 or ec384 |
 | reverse.frontend.domain\_max\_body\_size | Choose max size upload | 200M | Numeric value with unit (K,M,G,T) |
-| reverse.frontend.ssl | Generate letsencrypt certificate | false | true or false |
+| reverse.frontend.ssl | Generate letsencrypt certificate | disable | enable or disable |
 | reverse.backend.port | Port use by container | 8080 | Valid port number |
 
 More labels soon !!!
@@ -87,7 +87,7 @@ $ docker run -d \
     --label reverse.frontend.path=lutim \
     --label reverse.frontend.auth=USER:$(openssl passwd -crypt PASSWORD) \
     --label reverse.frontend.ssltype=ec256 \
-    --label reverse.frontend.ssl = true \
+    --label reverse.frontend.ssl=enable \
     --label reverse.backend.port=8181 \
     -v /docker/config/lutim/data:/data \
     -v /docker/data/lutim:/lutim/files \
