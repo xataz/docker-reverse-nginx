@@ -161,17 +161,21 @@ mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled 
 
 # Generate file
 if [ "${SWARM}" == "enable" ]; then
-    for service in $(curl --unix-socket /var/run/docker.sock http://localhost/services 2> /dev/null | jq '.[].Spec.Name' | sed 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d'); do 
+    for service in $(curl --unix-socket /var/run/docker.sock http://localhost/services 2> /dev/null | jq '.[].Spec.Name' | sed -e 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d' -e 's/"//g'); do 
         CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
         if [ "${CONTAINER_LABELS}" == "" ]; then
             CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.TaskTemplate.ContainerSpec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
         fi
-        f_make_conf ${service}
+        if [ "${CONTAINER_LABELS}" != "" ]; then
+            f_make_conf ${service}
+        fi
     done
 else
     for container in $(curl --unix-socket /var/run/docker.sock http://localhost/containers/json 2> /dev/null | jq '.[].Names' | sed 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d'); do 
         CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${container}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-        f_make_conf ${container}
+        if [ "${CONTAINER_LABELS}" != "" ]; then
+            f_make_conf ${container}
+        fi
     done
 fi
 
