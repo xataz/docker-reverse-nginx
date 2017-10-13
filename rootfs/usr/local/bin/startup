@@ -72,7 +72,7 @@ f_gen_location() {
 
 f_gen_certs() {
     container_name=$1
-    if [ "${FRONTEND_SSL}" == "true" ]; then
+    if [ "${FRONTEND_SSL}" == "enable" ]; then
         CERTFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.cert.pem
         KEYFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.key
         CHAINFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.chain.pem
