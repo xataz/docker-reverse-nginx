@@ -9,7 +9,7 @@
 > If you don't trust, you can build yourself.
 
 ## Tag available
-* latest, mainline, 1.13.5, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
+* latest, mainline, 1.13.6, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
 
 ## Features
 * No ROOT process
@@ -45,6 +45,8 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 ### Environments
 * UID : Choose uid for launch nginx (default : 991)
 * GID : Choose gid for launch nginx (default : 991)
+* EMAIL : Mail address for letsencrypt
+* SWARM : true if use this reverse with docker swarm mode
 
 ### Volumes
 * /nginx/ssl : For certificate persistance

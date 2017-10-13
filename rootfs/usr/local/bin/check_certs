@@ -60,5 +60,5 @@ f_check_certs() {
 f_check_certs
 
 if [ ${RELOAD_NGINX} -eq 1 ]; then
-    nginx reload
+    nginx -c reload
 fi

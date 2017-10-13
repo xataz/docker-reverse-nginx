@@ -1,11 +1,11 @@
 FROM xataz/alpine:3.6
 
 LABEL Description="reverse with nginx based on alpine" \
-      tags="latest mainline 1.13.5 1.13" \
+      tags="latest mainline 1.13.6 1.13" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="2017090601"
+      build_ver="2017091301"
 
-ARG NGINX_VER=1.13.5
+ARG NGINX_VER=1.13.6
 ARG NGINX_GPG="B0F4253373F8F6F510D42178520A9993A1C052F8"
 ARG BUILD_CORES
 ARG NGINX_CONF="--prefix=/nginx \
@@ -36,7 +36,8 @@ ARG NGINX_CONF="--prefix=/nginx \
 
 ENV UID=991 \
     GID=991 \
-    EMAIL=admin@mydomain.local
+    EMAIL=admin@mydomain.local \
+    SWARM=false
 
 RUN export BUILD_DEPS="build-base \
                     libressl-dev \
