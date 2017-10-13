@@ -6,7 +6,12 @@ LABEL Description="reverse with nginx based on alpine" \
       build_ver="2017091301"
 
 ARG NGINX_VER=1.13.6
-ARG NGINX_GPG="B0F4253373F8F6F510D42178520A9993A1C052F8"
+ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
+               A09CD539B8BB8CBE96E82BDFABD4D3B3F5806B4D \
+               4C2C85E705DC730833990C38A9376139A524C53E \
+               65506C02EFC250F1B7A3D694ECF0E90B2C172083 \
+               B0F4253373F8F6F510D42178520A9993A1C052F8 \
+               7338973069ED3F443F4D37DFA64FD5B17ADB39A8"
 ARG BUILD_CORES
 ARG NGINX_CONF="--prefix=/nginx \
                 --sbin-path=/usr/local/sbin/nginx \
@@ -62,7 +67,11 @@ RUN export BUILD_DEPS="build-base \
     && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 \
     && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz \
     && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz.asc \
-    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys "$NGINX_GPG" \
+    && for server in ha.pool.sks-keyservers.net hkp://keyserver.ubuntu.com:80 hkp://p80.pool.sks-keyservers.net:80 pgp.mit.edu; \
+	    do \
+            echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
+            gpg --keyserver "$server" --keyserver-options timeout=10 --recv-keys $NGINX_GPG && found=yes && break; \
+        done \
     && gpg --batch --verify nginx-${NGINX_VER}.tar.gz.asc nginx-${NGINX_VER}.tar.gz \
     && tar xzf nginx-${NGINX_VER}.tar.gz \
     && cd /tmp/nginx-${NGINX_VER} \
