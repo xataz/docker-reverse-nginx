@@ -3,7 +3,7 @@ FROM xataz/alpine:3.6
 LABEL Description="reverse with nginx based on alpine" \
       tags="latest mainline 1.13.6 1.13" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="2017091301"
+      build_ver="2017092201"
 
 ARG NGINX_VER=1.13.6
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
@@ -42,7 +42,9 @@ ARG NGINX_CONF="--prefix=/nginx \
 ENV UID=991 \
     GID=991 \
     EMAIL=admin@mydomain.local \
-    SWARM=disable
+    SWARM=disable \
+    TLS_VERSIONS="TLSv1.1 TLSv1.2" \
+    CIPHER_SUITE="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256"
 
 RUN export BUILD_DEPS="build-base \
                     libressl-dev \
@@ -63,6 +65,7 @@ RUN export BUILD_DEPS="build-base \
                 libressl \
                 pcre \
                 zlib \
+                bash \
     && cd /tmp \
     && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 \
     && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz \

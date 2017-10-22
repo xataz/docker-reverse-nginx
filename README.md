@@ -47,6 +47,8 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 * GID : Choose gid for launch nginx (default : 991)
 * EMAIL : Mail address for letsencrypt
 * SWARM : enable if use this reverse with docker swarm mode (default : disable)
+* TLS_VERSION : Choose tls version separate by space (default : "TLSv1.1 TLSv1.2")
+* CIPHER_SUITE : Choose cipher suite (default : "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256")
 
 ### Volumes
 * /nginx/ssl : For certificate persistance
@@ -57,13 +59,6 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 * 8443
 
 ## Usage
-### Environments
-| Variable | Description | default | value |
-| -------- | ----------- | ------- | ----- |
-| UID | UID for launch nginx | 991 | Valid UID number |
-| GID | GID for launch nginx | 991 | Valid GID number |
-| EMAIL | email use for generate letsencrypt certificates | admin@mydomain.local | Valid address mail |
-
 ### Labels
 | Label Name | Description | default | value |
 | ---------- | ----------- | ------- | ----- |
@@ -76,6 +71,11 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 | reverse.backend.port | Port use by container | 8080 | Valid port number |
 
 More labels soon !!!
+
+### Gen manuel cert
+```shell
+$ docker exec -ti container_name gen_manuel_ssl sub.domain.tld rsa4096
+```
 
 ### Launch
 #### First launch another container

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+DOMAIN=$1
+SSL_TYPE=$2
+
+if [ ${SSL_TYPE} == "" ]; then
+    SSL_TYPE=ec384
+fi
+
+/usr/local/bin/lego -a -m ${EMAIL} -d ${DOMAIN} --path /nginx/ssl --http :8080 --tls :8443 -k ${SSL_TYPE} run

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -xa
+
+TIMESTAMP="$(cat /tmp/timestamp)"
+
+echo ${TIMESTAMP}
+
+source /usr/local/bin/functions
+
+curl --unix-socket /var/run/docker.sock -N "http://localhost/events?since=${TIMESTAMP}" 2> /dev/null | while read line; do 
+    echo $line
+    f_analyze_line "$line"
+done
