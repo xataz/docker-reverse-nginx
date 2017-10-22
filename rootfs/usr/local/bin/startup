@@ -17,13 +17,15 @@ f_log INF "Start reverse configuration ..."
 
 # Prepare container
 f_log INF "Create user 'reverse'"
-addgroup -g ${GID} reverse && adduser -H -s /bin/sh -D -G reverse -u ${UID} reverse
+addgroup -g ${GID} reverse
+adduser -H -s /bin/sh -D -G reverse -u ${UID} reverse
 f_log INF "Create folder"
 mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled /nginx/ssl /nginx/ssl/selfsigned/dhparam
 
 # Generate nginx configuration
 f_log INF "Generate SSL configuration"
-sed -i -e 's/<ssl_protocols>/'${TLS_VERSIONS}'/' -e 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
+sed -i "s/<ssl_protocols>/${TLS_VERSIONS}/" /nginx/conf.d/ssl.conf
+sed -i 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
 
 
 # Generate file
@@ -48,7 +50,7 @@ else
 fi
 
 f_log INF "Apply permissions"
-chown -R reverse:reverse /nginx /etc/s6.d
+chown -R ${UID}:${GID} /nginx /etc/s6.d
 chmod +x /usr/local/bin/*
 find /etc/s6.d -name run -exec chmod +x {} \;
 find /etc/s6.d -name finish -exec chmod +x {} \;
@@ -58,7 +60,7 @@ f_log SUC "End reverse configuration"
 
 ## run s6
 if [ $# -gt 0 ]; then
-    exec su-exec reverse:reverse "$@"
+    exec su-exec ${UID}:${GID} "$@"
 else
-    exec su-exec reverse:reverse /bin/s6-svscan /etc/s6.d    
+    exec su-exec ${UID}:${GID} /bin/s6-svscan /etc/s6.d    
 fi
