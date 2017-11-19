@@ -1,9 +1,9 @@
 FROM xataz/alpine:3.6
 
 LABEL Description="reverse with nginx based on alpine" \
-      tags="latest mainline 1.13.6 1.13" \
+      tags="latest mainline 1.0.0 1.0 1.13.6 1.13" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="2017103001"
+      build_ver="2017111901"
 
 ARG NGINX_VER=1.13.6
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
@@ -27,49 +27,83 @@ ARG NGINX_CONF="--prefix=/nginx \
                 --with-threads \
                 --with-pcre-jit \
                 --with-ipv6 \
+                --with-file-aio \
                 --without-http_ssi_module \
                 --without-http_scgi_module \
                 --without-http_uwsgi_module \
                 --without-http_geo_module \
                 --without-http_autoindex_module \
-                --without-http_map_module \
                 --without-http_split_clients_module \
                 --without-http_memcached_module \
                 --without-http_empty_gif_module \
-                --add-module=/tmp/headers-more-nginx-module \
                 --without-http_browser_module"
+ARG NGINX_3RD_PARTY_MODULES="--add-module=/tmp/headers-more-nginx-module \
+                            --add-module=/tmp/nginx-ct \
+                            --add-module=/tmp/ngx_brotli"
+ARG OPENSSL_VER=1.1.0g
+
 
 ENV UID=991 \
     GID=991 \
     EMAIL=admin@mydomain.local \
     SWARM=disable \
     TLS_VERSIONS="TLSv1.1 TLSv1.2" \
-    CIPHER_SUITE="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256"
+    CIPHER_SUITE="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256" \
+    ECDH_CURVE="P-521:P-384:secp521r1:secp384r1"
 
 RUN export BUILD_DEPS="build-base \
-                    libressl-dev \
                     pcre-dev \
                     zlib-dev \
                     libc-dev \
                     wget \
                     gnupg \
                     go \
-                    git" \
+                    git \
+                    autoconf \
+                    automake \
+                    libtool \
+                    cmake \
+                    binutils \
+                    linux-headers \
+                    jemalloc-dev" \
     && NB_CORES=${BUILD_CORES-$(grep -c "processor" /proc/cpuinfo)} \
-    && apk add -U ${BUILD_DEPS} \
+    && apk add --no-cache ${BUILD_DEPS} \
                 s6 \
                 su-exec \
                 ca-certificates \
                 curl \
                 jq \
-                libressl \
                 pcre \
                 zlib \
                 bash \
+                libgcc \
+                libstdc++ \
+                jemalloc \
+                bind-tools \
     && cd /tmp \
-    && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 \
-    && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz \
-    && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz.asc \
+    # Download source
+    && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 /tmp/headers-more-nginx-module \
+    && git clone https://github.com/bagder/libbrotli --depth=1 /tmp/libbrotli \
+    && git clone https://github.com/google/ngx_brotli --depth=1 /tmp/ngx_brotli \
+    && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz -O /tmp/nginx-${NGINX_VER}.tar.gz \
+    && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz.asc -O /tmp/nginx-${NGINX_VER}.tar.gz.asc \
+    && wget -q https://www.openssl.org/source/openssl-${OPENSSL_VER}.tar.gz -O /tmp/openssl-${OPENSSL_VER}.tar.gz \
+    && git clone https://github.com/grahamedgecombe/nginx-ct --depth=1 /tmp/nginx-ct \
+    # Brotli
+    && cd /tmp/libbrotli \
+    && ./autogen.sh \
+    && ./configure \
+    && mkdir brotli/c/tools/.deps \
+    && touch brotli/c/tools/.deps/brotli-brotli.Po \
+    && make -j ${NB_CORES} \
+    && make install \
+    && cd /tmp/ngx_brotli \
+    && git submodule update --init \
+    # OpenSSL
+    && cd /tmp \
+    && tar xzf openssl-${OPENSSL_VER}.tar.gz \
+    # Nginx
+    && cd /tmp \
     && for server in ha.pool.sks-keyservers.net hkp://keyserver.ubuntu.com:80 hkp://p80.pool.sks-keyservers.net:80 pgp.mit.edu; \
 	    do \
             echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
@@ -78,17 +112,25 @@ RUN export BUILD_DEPS="build-base \
     && gpg --batch --verify nginx-${NGINX_VER}.tar.gz.asc nginx-${NGINX_VER}.tar.gz \
     && tar xzf nginx-${NGINX_VER}.tar.gz \
     && cd /tmp/nginx-${NGINX_VER} \
-    && ./configure ${NGINX_CONF} \            
+    && wget -q https://raw.githubusercontent.com/cujanovic/nginx-dynamic-tls-records-patch/master/nginx__dynamic_tls_records_1.13.0%2B.patch -O dynamic_records.patch \
+    && patch -p1 < dynamic_records.patch \
+    && ./configure ${NGINX_CONF} ${NGINX_3RD_PARTY_MODULES} \
+                        --with-cc-opt="-O3 -fPIE -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -Wno-deprecated-declarations" \
+                        --with-ld-opt="-lrt -ljemalloc -Wl,-Bsymbolic-functions -Wl,-z,relro" \
+                        --with-openssl-opt='no-async enable-ec_nistp_64_gcc_128 no-shared no-ssl2 no-ssl3 no-comp no-idea no-weak-ssl-ciphers -DOPENSSL_NO_HEARTBEATS -O3 -fPIE -fstack-protector-strong -D_FORTIFY_SOURCE=2' \
+                        --with-openssl=/tmp/openssl-${OPENSSL_VER} \
     && make -j ${NB_CORES} \
     && make install \
+    # Lego
     && mkdir -p /tmp/go/bin \
     && export GOPATH=/tmp/go \
     && export GOBIN=$GOPATH/bin \
     && git config --global http.https://gopkg.in.followRedirects true \
     && go get github.com/xenolf/lego \
     && mv /tmp/go/bin/lego /usr/local/bin/lego \
-    && apk del ${BUILD_DEPS} \
-    && rm -rf /tmp/* /var/cache/apk/*
+    # Cleanup
+    && apk del --no-cache ${BUILD_DEPS} \
+    && rm -rf /tmp/*
 
 COPY rootfs /
 RUN chmod +x /usr/local/bin/startup /etc/s6.d/*/*

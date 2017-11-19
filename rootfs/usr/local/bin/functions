@@ -32,11 +32,24 @@ f_log() {
 
 f_gen_sites_enabled() {
     if [ "${FRONTEND_SSL}" == "enable" ]; then
-        template_sites=/nginx/sites-enabled/template_ssl
+        template_sites=/templates/sites-enabled_ssl.tmpl
     else
-        template_sites=/nginx/sites-enabled/template
+        template_sites=/templates/sites-enabled.tmpl
     fi
     sed -e 's|<frontend_domain>|'${FRONTEND_DOMAIN}'|' ${template_sites} > /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    if [[ "${FRONTEND_HSTS}" == "false" ]] || [[ "${FRONTEND_HSTS}" == "disable" ]]; then
+        sed -i -e "s|include /nginx/conf.d/hsts.conf|#include /nginx/conf.d/hsts.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    fi
+    if [[ "${FRONTEND_HEADERS}" == "false" ]] || [[ "${FRONTEND_HEADERS}" == "disable" ]]; then
+        sed -i -e "s|include /nginx/conf.d/headers.conf|#include /nginx/conf.d/headers.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    fi
+    if [[ "${FRONTEND_OCSP}" == "false" ]] || [[ "${FRONTEND_OCSP}" == "disable" ]]; then
+        sed -i -e "s|include /nginx/conf.d/ocsp.conf|#include /nginx/conf.d/ocsp.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    fi
+    if [[ "${FRONTEND_CT}" == "false" ]] || [[ "${FRONTEND_CT}" == "disable" ]]; then
+        sed -i -e "s|ssl_ct_static_scts|#ssl_ct_static_scts|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+        sed -i -e "s|include /nginx/conf.d/ct.conf|#include /nginx/conf.d/ct.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    fi
 }
 
 f_gen_location() {
@@ -60,38 +73,50 @@ f_gen_location() {
                 -e 's|<backend_port>|'${BACKEND_PORT}'|' \
                 -e 's|<frontend_domain>|'${FRONTEND_DOMAIN}'|' \
                 -e 's|<frontend_path>|'${FRONTEND_PATH}'|' \
-                -e 's|<auth_file>|'${auth_file}'|' /nginx/path.d/template_auth > ${path_file}
+                -e 's|<auth_file>|'${auth_file}'|' /templates/path_auth.tmpl > ${path_file}
             echo "${FRONTEND_AUTH}" > ${auth_file}
         else
             sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
                 -e 's|<backend_addr>|'${container_name}'|' \
                 -e 's|<backend_port>|'${BACKEND_PORT}'|' \
-                -e 's|<frontend_path>|'${FRONTEND_PATH}'|' /nginx/path.d/template > ${path_file}
+                -e 's|<frontend_path>|'${FRONTEND_PATH}'|' /templates/path.tmpl > ${path_file}
         fi
     fi
 }
 
 f_gen_certs() {
     container_name=$1
-    if [ "${FRONTEND_SSL}" == "enable" ]; then
-        CERTFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.cert.pem
-        KEYFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.key
-        CHAINFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.chain.pem
-        FULLCHAINFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.crt
-        if [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ] || [ ! -e ${CHAINFILE} ] || [ ! -e ${FULLCHAINFILE} ]; then
-            mkdir -p /nginx/www/${FRONTEND_DOMAIN}
-            /usr/local/bin/lego -a -m ${EMAIL} -d ${FRONTEND_DOMAIN} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
-            if [ $? == 0 ]; then
-                head -$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1) ${FULLCHAINFILE} > ${CERTFILE}
-                tail -$(($(wc -l ${FULLCHAINFILE} | awk '{print $1}')-$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1))) ${FULLCHAINFILE} > ${CHAINFILE}
-                chown -R ${UID}:${GID} /nginx/ssl/
+    for domain_name in ${FRONTEND_DOMAIN}; do
+        if [ "${FRONTEND_SSL}" == "enable" ]; then
+            CERTFILE=/nginx/ssl/certificates/${domain_name}.cert.pem
+            KEYFILE=/nginx/ssl/certificates/${domain_name}.key
+            CHAINFILE=/nginx/ssl/certificates/${domain_name}.chain.pem
+            FULLCHAINFILE=/nginx/ssl/certificates/${domain_name}.crt
+            if [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ] || [ ! -e ${CHAINFILE} ] || [ ! -e ${FULLCHAINFILE} ]; then
+                mkdir -p /nginx/www/${domain_name}
+                /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
+                if [ $? == 0 ]; then
+                    head -$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1) ${FULLCHAINFILE} > ${CERTFILE}
+                    tail -$(($(wc -l ${FULLCHAINFILE} | awk '{print $1}')-$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1))) ${FULLCHAINFILE} > ${CHAINFILE}
+                    chown -R ${UID}:${GID} /nginx/ssl/
+                fi
+                [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
             fi
-            [[ $? == 0 ]] && f_log INF "New Certificate for ${FRONTEND_DOMAIN} generated" || f_log ERR "New Certificate for ${FRONTEND_DOMAIN} not generated"
+        fi
+    done
+}
+
+f_gen_scts() {
+    container_name=$1
+    if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_CT}" == "true" ]; then
+        mkdir -p /nginx/ssl/timestamps/${FRONTEND_DOMAIN}
+        FULLCHAINFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.crt
+        SCTFILE=nginx/ssl/timestamps/${FRONTEND_DOMAIN}/fullchain.sct
+        if [ ! -f ${SCTFILE} ]; then
+            ct-submit ct.googleapis.com/pilot <${FULLCHAINFILE}>${SCTFILE}
         fi
     fi
 }
-
-
 
 f_make_conf() {
     FRONTEND_DOMAIN=mydomain.local
@@ -101,6 +126,9 @@ f_make_conf() {
     FRONTEND_PATH="/"
     FRONTEND_SSL=disable
     FRONTEND_AUTH=""
+    FRONTEND_HSTS=enable
+    FRONTEND_OCSP=disable
+    FRONTEND_CT=disable
 
     container_name=$1
     IFS=$'\n' 
@@ -129,12 +157,22 @@ f_make_conf() {
                 "reverse.backend.port")
                     BACKEND_PORT="$(echo ${label} | awk '{print $2}')"
                 ;;
+                "reverse.frontend.hsts")
+                    FRONTEND_HSTS="$(echo ${label} | awk '{print $2}')"
+                ;;
+                "reverse.frontend.ocsp")
+                    FRONTEND_OCSP="$(echo ${label} | awk '{print $2}')"
+                ;;
+                "reverse.frontend.ct")
+                    FRONTEND_CT="$(echo ${label} | awk '{print $2}')"
+                ;;
             esac
         done
         f_log INF "Generate files for ${FRONTEND_DOMAIN}, with path=${FRONTEND_PATH}, auth=${FRONTEND_AUTH}, ssl_type=${FRONTEND_SSLTYPE}, ssl=${FRONTEND_SSL} and port=${BACKEND_PORT}"
         f_gen_location ${container_name}
         f_gen_sites_enabled
         f_gen_certs ${container_name}
+        f_gen_scts ${container_name}
     fi
 }
 
@@ -185,9 +223,9 @@ f_service_create() {
     fi
     if [ "${CONTAINER_LABELS}" != "" ]; then
         f_make_conf ${1}
-    fi
-    f_log INF "Service $1 created"
-    nginx -s reload
+        f_log INF "Service $1 created"
+        nginx -s reload
+    fi    
 }
 
 f_service_remove() {
@@ -197,27 +235,27 @@ f_service_remove() {
     fi
     if [ "${CONTAINER_LABELS}" != "" ]; then
         f_remove_conf ${1}
-    fi
-    f_log INF "Service $1 removed"
-    nginx -s reload
+        f_log INF "Service $1 removed"
+        nginx -s reload
+    fi    
 }
 
 f_container_start() {
     CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${1}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
     if [ "${CONTAINER_LABELS}" != "" ]; then
         f_make_conf ${1}
-    fi
-    f_log INF "Container $1 created"
-    nginx -s reload
+        f_log INF "Container $1 created"
+        nginx -s reload
+    fi    
 }
 
 f_container_die() {
     CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${1}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
     if [ "${CONTAINER_LABELS}" != "" ]; then
         f_remove_conf ${1}
+        f_log INF "Container $1 removed"
+        nginx -s reload
     fi
-    f_log INF "Container $1 removed"
-    nginx -s reload
 }
 
 f_analyze_line() {

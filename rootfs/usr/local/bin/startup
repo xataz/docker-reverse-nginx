@@ -17,10 +17,12 @@ f_log INF "Start reverse configuration ..."
 
 # Prepare container
 f_log INF "Create user 'reverse'"
-if [ "$(grep ${GID} /etc/group)" == "" ]; then
+if [ "$(grep ':'${GID}':' /etc/group)" == "" ]; then
     addgroup -g ${GID} reverse
+    GROUP_NAME=reverse
 else
-    GROUP_NAME=$(grep ${GID} /etc/group | cut -d: -f1)
+    GROUP_NAME=$(grep ':'${GID}':' /etc/group | cut -d: -f1)
+    echo ${GROUP_NAME}
 fi
 
 if [ "$(grep ${UID} /etc/passwd)" == "" ]; then
@@ -33,6 +35,7 @@ mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled 
 f_log INF "Generate SSL configuration"
 sed -i "s/<ssl_protocols>/${TLS_VERSIONS}/" /nginx/conf.d/ssl.conf
 sed -i 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
+sed -i "s/<ecdh_curve>/${ECDH_CURVE}/" /nginx/conf.d/ssl.conf
 
 
 # Generate file

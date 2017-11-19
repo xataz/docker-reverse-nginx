@@ -9,7 +9,10 @@
 > If you don't trust, you can build yourself.
 
 ## Tag available
-* latest, mainline, 1.13.6, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
+* latest, mainline, 1.13.6, 1.13, 1.0.0, 1.0 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
+
+**I've created new version rules, Before, I used nginx version, but now I will use [MAJOR-VERSION].[MINOR-VERSION].[BUG-FIXES].**
+**For transition, I will use both notations**
 
 ## Features
 * No ROOT process
@@ -17,6 +20,10 @@
 * Automatic certificate generation and renew with letsencrypt and without downtime (use lego)
 * Latest nginx version
 * ARG for custom build
+* Latest openSSL version
+* OCSP Support
+* HSTS Support
+* CT Support
 
 ## Description
 What is [Nginx](http://nginx.org)?
@@ -44,14 +51,17 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 ## Configuration
 ### Environments
 * UID : Choose uid for launch nginx (default : 991)
-* GID : Choose gid for launch nginx (default : 991)
+* GID : Choose gid for launch nginx (default : 991) (Use local docker group id)
 * EMAIL : Mail address for letsencrypt
 * SWARM : enable if use this reverse with docker swarm mode (default : disable)
 * TLS_VERSION : Choose tls version separate by space (default : "TLSv1.1 TLSv1.2")
 * CIPHER_SUITE : Choose cipher suite (default : "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256")
+* ECDH_CURVE : Choose ecdh curve (default : "P-521:P-384:secp521r1:secp384r1")
 
 ### Volumes
 * /nginx/ssl : For certificate persistance
+* /nginx/sites_enabled : Warning, this file can be delete if restart container
+* /nginx/path.d : Warning, this file can be delete if restart container 
 * /nginx/custom_sites : For create your own sites
 
 ### Ports
@@ -62,13 +72,17 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 ### Labels
 | Label Name | Description | default | value |
 | ---------- | ----------- | ------- | ----- |
-| reverse.frontend.domain | Domain Name for this service | mydomain.local | valid domain name |
+| reverse.frontend.domain | Domain Name for this service | mydomain.local | valid domain name (For multiple domains, separate by space) |
 | reverse.frontend.path | Domain path (warning, no rewrite url) | / | valid path, with / |
 | reverse.frontend.auth | For auth basic | none | user:encryptpassword |
 | reverse.frontend.ssltype | Choose ssl type | ec384 | rsa2048, rsa4096, rsa8192, ec256 or ec384 |
 | reverse.frontend.domain\_max\_body\_size | Choose max size upload | 200M | Numeric value with unit (K,M,G,T) |
+| reverse.frontend.hsts | Enable HSTS | enable | enable or disable |
+| reverse.frontend.ocsp | Enable OCSP | disable | enable or disable |
+| reverse.frontend.ct | Generate CT for certificate | disable | enable or disable |
 | reverse.frontend.ssl | Generate letsencrypt certificate | disable | enable or disable |
 | reverse.backend.port | Port use by container | 8080 | Valid port number |
+
 
 More labels soon !!!
 
@@ -113,6 +127,3 @@ docker run -d \
 ```
 
 URI Access : https://sub.domain.com/lutim
-
-
-
