@@ -141,7 +141,7 @@ f_make_conf() {
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
                     FRONTEND_DOMAIN=""
-                    FRONTEND_DOMAIN="$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')"
+                    FRONTEND_DOMAIN=("$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')")
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
@@ -194,7 +194,7 @@ f_remove_conf() {
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
                     FRONTEND_DOMAIN=""
-                    FRONTEND_DOMAIN="$(echo ${label} | awk '{print $2}')"
+                    FRONTEND_DOMAIN=("$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')")
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
@@ -204,19 +204,21 @@ f_remove_conf() {
         done
     fi
 
-    rm -f /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    for domain_name in ${FRONTEND_DOMAIN}; do
+        rm -f /nginx/sites-enabled/${domain_name}.conf
 
-    if [ "${FRONTEND_PATH}" == "/" ]; then
-        rm -f /nginx/path.d/${FRONTEND_DOMAIN}/base.conf
-        if [ -e /nginx/auth/${FRONTEND_DOMAIN}/base.auth ]; then
-            rm -f /nginx/auth/${FRONTEND_DOMAIN}/base.auth
+        if [ "${FRONTEND_PATH}" == "/" ]; then
+            rm -f /nginx/path.d/${domain_name}/base.conf
+            if [ -e /nginx/auth/${domain_name}/base.auth ]; then
+                rm -f /nginx/auth/${domain_name}/base.auth
+            fi
+        else
+            rm -f /nginx/path.d/${domain_name}/${FRONTEND_PATH}.conf
+            if [ -e /nginx/auth/${domain_name}/${FRONTEND_PATH}.auth ]; then
+                rm -f /nginx/auth/${domain_name}/${FRONTEND_PATH}.auth
+            fi
         fi
-    else
-        rm -f /nginx/path.d/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.conf
-        if [ -e /nginx/auth/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.auth ]; then
-            rm -f /nginx/auth/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.auth
-        fi
-    fi
+    done
 }
 
 
