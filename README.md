@@ -74,7 +74,7 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 | ---------- | ----------- | ------- | ----- |
 | reverse.frontend.domain | Domain Name for this service | mydomain.local | valid domain name (For multiple domains, separate by comma) |
 | reverse.frontend.path | Domain path (warning, no rewrite url) | / | valid path, with / |
-| reverse.frontend.auth | For auth basic | none | user:encryptpassword |
+| reverse.frontend.auth | For auth basic | none | user:encryptpassword (For multiple auth, separate by comma) |
 | reverse.frontend.ssltype | Choose ssl type | ec384 | rsa2048, rsa4096, rsa8192, ec256 or ec384 |
 | reverse.frontend.domain\_max\_body\_size | Choose max size upload | 200M | Numeric value with unit (K,M,G,T) |
 | reverse.frontend.hsts | Enable HSTS | enable | enable or disable |
@@ -82,7 +82,6 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 | reverse.frontend.ct | Generate CT for certificate | disable | enable or disable |
 | reverse.frontend.ssl | Generate letsencrypt certificate | disable | enable or disable |
 | reverse.backend.port | Port use by container | 8080 | Valid port number |
-
 
 More labels soon !!!
 
