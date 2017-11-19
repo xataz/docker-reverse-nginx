@@ -10,41 +10,39 @@ server {
     {% endif %}
 }
 
-{% if reverse_frontend_ssl is defined %}
-    {% if reverse_frontend_ssl == "enable" or reverse_frontend_ssl == "true" %}
-    server {
-        listen 8443 ssl http2;
-        server_name {{ domain_name }};
-        index index.html index.php index.htm;
+{% if reverse_frontend_ssl is defined and (reverse_frontend_ssl == "enable" or reverse_frontend_ssl == "true") %}
+server {
+    listen 8443 ssl http2;
+    server_name {{ domain_name }};
+    index index.html index.php index.htm;
 
-        ssl_certificate /nginx/ssl/certificates/{{ domain_name }}.crt;
-        ssl_certificate_key /nginx/ssl/certificates/{{ domain_name }}.key;
-        ssl_trusted_certificate /nginx/ssl/certificates/{{ domain_name }}.chain.pem;
-        ssl_ct_static_scts /nginx/ssl/timestamps/{{ domain_name }};
+    ssl_certificate /nginx/ssl/certificates/{{ domain_name }}.crt;
+    ssl_certificate_key /nginx/ssl/certificates/{{ domain_name }}.key;
+    ssl_trusted_certificate /nginx/ssl/certificates/{{ domain_name }}.chain.pem;
+    ssl_ct_static_scts /nginx/ssl/timestamps/{{ domain_name }};
 
-        include /nginx/conf.d/ssl.conf;
-        include /nginx/conf.d/headers.conf;
-        {% if reverse_frontend_hsts is defined %}
-            {% if reverse_frontend_hsts == "enable" or reverse_frontend_hsts == "true" %}
-                include /nginx/conf.d/hsts.conf;
-            {% endif %}
+    include /nginx/conf.d/ssl.conf;
+    include /nginx/conf.d/headers.conf;
+    {% if reverse_frontend_hsts is defined %}
+        {% if reverse_frontend_hsts == "enable" or reverse_frontend_hsts == "true" %}
+            include /nginx/conf.d/hsts.conf;
         {% endif %}
-        {% if reverse_frontend_ocsp is defined %}
-            {% if reverse_frontend_ocsp == "enable" or reverse_frontend_ocsp == "true" %}
-                include /nginx/conf.d/ocsp.conf;
-            {% endif %}
-        {% endif %}
-        {% if reverse_frontend_ct is defined %}
-            {% if reverse_frontend_ct == "enable" or reverse_frontend_ct == "true" %}
-                include /nginx/conf.d/ct.conf;
-            {% endif %}
-        {% endif %}
-        include /nginx/path.d/{{ domain_name }}/*.conf;
-
-        location ~ /\.well-known/acme-challenge {
-            root /nginx/www/{{ domain_name }};
-            allow all;
-        }
-    }
     {% endif %}
+    {% if reverse_frontend_ocsp is defined %}
+        {% if reverse_frontend_ocsp == "enable" or reverse_frontend_ocsp == "true" %}
+            include /nginx/conf.d/ocsp.conf;
+        {% endif %}
+    {% endif %}
+    {% if reverse_frontend_ct is defined %}
+        {% if reverse_frontend_ct == "enable" or reverse_frontend_ct == "true" %}
+            include /nginx/conf.d/ct.conf;
+        {% endif %}
+    {% endif %}
+    include /nginx/path.d/{{ domain_name }}/*.conf;
+
+    location ~ /\.well-known/acme-challenge {
+        root /nginx/www/{{ domain_name }};
+        allow all;
+    }
+}
 {% endif %}

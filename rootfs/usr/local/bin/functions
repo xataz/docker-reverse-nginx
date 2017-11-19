@@ -55,16 +55,16 @@ f_gen_location() {
             auth_file=/nginx/auth/${domain_name}/${FRONTEND_PATH}.auth
         fi
         if [ ! -e ${path_file} ]; then
-            if [ "${FRONTEND_AUTH}" != "" ]; then
-                mkdir -p /nginx/auth/${domain_name}
-                export frontend_path=${FRONTEND_PATH}
-                export backend_addr=${container_name}
-                export frontend_path=${FRONTEND_PATH}
-                export auth_file=${auth_file}
+            mkdir -p /nginx/auth/${domain_name}
+            export frontend_auth=${FRONTEND_AUTH}
+            export frontend_path=${FRONTEND_PATH}
+            export backend_addr=${container_name}
+            export frontend_path=${FRONTEND_PATH}
+            export auth_file=${auth_file}
+            export frontend_domain_max_body_size=${FRONTEND_MAX_BODY_SIZE}
 
-                j2 /templates/path.tmpl > ${path_file}
-                j2 /templates/auth.tmpl > ${path_auth}
-            fi
+            j2 /templates/path.tmpl > ${path_file}
+            j2 /templates/auth.tmpl > ${path_auth}
         fi
     done
 }
