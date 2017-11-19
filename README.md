@@ -72,7 +72,7 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 ### Labels
 | Label Name | Description | default | value |
 | ---------- | ----------- | ------- | ----- |
-| reverse.frontend.domain | Domain Name for this service | mydomain.local | valid domain name (For multiple domains, separate by space) |
+| reverse.frontend.domain | Domain Name for this service | mydomain.local | valid domain name (For multiple domains, separate by comma) |
 | reverse.frontend.path | Domain path (warning, no rewrite url) | / | valid path, with / |
 | reverse.frontend.auth | For auth basic | none | user:encryptpassword |
 | reverse.frontend.ssltype | Choose ssl type | ec384 | rsa2048, rsa4096, rsa8192, ec256 or ec384 |

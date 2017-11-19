@@ -42,15 +42,6 @@ ARG NGINX_3RD_PARTY_MODULES="--add-module=/tmp/headers-more-nginx-module \
                             --add-module=/tmp/ngx_brotli"
 ARG OPENSSL_VER=1.1.0g
 
-
-ENV UID=991 \
-    GID=991 \
-    EMAIL=admin@mydomain.local \
-    SWARM=disable \
-    TLS_VERSIONS="TLSv1.1 TLSv1.2" \
-    CIPHER_SUITE="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256" \
-    ECDH_CURVE="P-521:P-384"
-
 RUN export BUILD_DEPS="build-base \
                     pcre-dev \
                     zlib-dev \
@@ -137,6 +128,14 @@ COPY rootfs /
 RUN chmod +x /usr/local/bin/startup /etc/s6.d/*/*
 
 EXPOSE 8080 8443
+
+ENV UID=991 \
+    GID=991 \
+    EMAIL=admin@mydomain.local \
+    SWARM=disable \
+    TLS_VERSIONS="TLSv1.1 TLSv1.2" \
+    CIPHER_SUITE="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256" \
+    ECDH_CURVE="P-521:P-384"
 
 ENTRYPOINT ["/usr/local/bin/startup"]
 CMD ["/bin/s6-svscan", "/etc/s6.d"]

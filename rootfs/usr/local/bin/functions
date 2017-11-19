@@ -141,7 +141,7 @@ f_make_conf() {
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
                     FRONTEND_DOMAIN=""
-                    FRONTEND_DOMAIN="$(echo ${label} | awk '{print $2}')"
+                    FRONTEND_DOMAIN="$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')"
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
