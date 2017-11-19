@@ -36,52 +36,56 @@ f_gen_sites_enabled() {
     else
         template_sites=/templates/sites-enabled.tmpl
     fi
-    sed -e 's|<frontend_domain>|'${FRONTEND_DOMAIN}'|' ${template_sites} > /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
-    if [[ "${FRONTEND_HSTS}" == "false" ]] || [[ "${FRONTEND_HSTS}" == "disable" ]]; then
-        sed -i -e "s|include /nginx/conf.d/hsts.conf|#include /nginx/conf.d/hsts.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
-    fi
-    if [[ "${FRONTEND_HEADERS}" == "false" ]] || [[ "${FRONTEND_HEADERS}" == "disable" ]]; then
-        sed -i -e "s|include /nginx/conf.d/headers.conf|#include /nginx/conf.d/headers.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
-    fi
-    if [[ "${FRONTEND_OCSP}" == "false" ]] || [[ "${FRONTEND_OCSP}" == "disable" ]]; then
-        sed -i -e "s|include /nginx/conf.d/ocsp.conf|#include /nginx/conf.d/ocsp.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
-    fi
-    if [[ "${FRONTEND_CT}" == "false" ]] || [[ "${FRONTEND_CT}" == "disable" ]]; then
-        sed -i -e "s|ssl_ct_static_scts|#ssl_ct_static_scts|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
-        sed -i -e "s|include /nginx/conf.d/ct.conf|#include /nginx/conf.d/ct.conf|g" /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
-    fi
+    for domain_name in ${FRONTEND_DOMAIN}; do
+        sed -e 's|<frontend_domain>|'${domain_name}'|' ${template_sites} > /nginx/sites-enabled/${domain_name}.conf
+        if [[ "${FRONTEND_HSTS}" == "false" ]] || [[ "${FRONTEND_HSTS}" == "disable" ]]; then
+            sed -i -e "s|include /nginx/conf.d/hsts.conf|#include /nginx/conf.d/hsts.conf|g" /nginx/sites-enabled/${domain_name}.conf
+        fi
+        if [[ "${FRONTEND_HEADERS}" == "false" ]] || [[ "${FRONTEND_HEADERS}" == "disable" ]]; then
+            sed -i -e "s|include /nginx/conf.d/headers.conf|#include /nginx/conf.d/headers.conf|g" /nginx/sites-enabled/${domain_name}.conf
+        fi
+        if [[ "${FRONTEND_OCSP}" == "false" ]] || [[ "${FRONTEND_OCSP}" == "disable" ]]; then
+            sed -i -e "s|include /nginx/conf.d/ocsp.conf|#include /nginx/conf.d/ocsp.conf|g" /nginx/sites-enabled/${domain_name}.conf
+        fi
+        if [[ "${FRONTEND_CT}" == "false" ]] || [[ "${FRONTEND_CT}" == "disable" ]]; then
+            sed -i -e "s|ssl_ct_static_scts|#ssl_ct_static_scts|g" /nginx/sites-enabled/${domain_name}.conf
+            sed -i -e "s|include /nginx/conf.d/ct.conf|#include /nginx/conf.d/ct.conf|g" /nginx/sites-enabled/${domain_name}.conf
+        fi
+    do
 }
 
 f_gen_location() {
     container_name=$1
-    if [ ! -d /nginx/path.d/${FRONTEND_DOMAIN} ]; then
-        mkdir -p /nginx/path.d/${FRONTEND_DOMAIN}
-    fi
-
-    if [ "${FRONTEND_PATH}" == "/" ]; then
-        path_file=/nginx/path.d/${FRONTEND_DOMAIN}/base.conf
-        auth_file=/nginx/auth/${FRONTEND_DOMAIN}/base.auth
-    else
-        path_file=/nginx/path.d/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.conf
-        auth_file=/nginx/auth/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.auth
-    fi
-    if [ ! -e ${path_file} ]; then
-        if [ "${FRONTEND_AUTH}" != "" ]; then
-            mkdir -p /nginx/auth/${FRONTEND_DOMAIN}
-            sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
-                -e 's|<backend_addr>|'${container_name}'|' \
-                -e 's|<backend_port>|'${BACKEND_PORT}'|' \
-                -e 's|<frontend_domain>|'${FRONTEND_DOMAIN}'|' \
-                -e 's|<frontend_path>|'${FRONTEND_PATH}'|' \
-                -e 's|<auth_file>|'${auth_file}'|' /templates/path_auth.tmpl > ${path_file}
-            echo "${FRONTEND_AUTH}" > ${auth_file}
-        else
-            sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
-                -e 's|<backend_addr>|'${container_name}'|' \
-                -e 's|<backend_port>|'${BACKEND_PORT}'|' \
-                -e 's|<frontend_path>|'${FRONTEND_PATH}'|' /templates/path.tmpl > ${path_file}
+    for domain_name in ${FRONTEND_DOMAIN}; do
+        if [ ! -d /nginx/path.d/${domain_name} ]; then
+            mkdir -p /nginx/path.d/${domain_name}
         fi
-    fi
+
+        if [ "${FRONTEND_PATH}" == "/" ]; then
+            path_file=/nginx/path.d/${domain_name}/base.conf
+            auth_file=/nginx/auth/${domain_name}/base.auth
+        else
+            path_file=/nginx/path.d/${domain_name}/${FRONTEND_PATH}.conf
+            auth_file=/nginx/auth/${domain_name}/${FRONTEND_PATH}.auth
+        fi
+        if [ ! -e ${path_file} ]; then
+            if [ "${FRONTEND_AUTH}" != "" ]; then
+                mkdir -p /nginx/auth/${domain_name}
+                sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
+                    -e 's|<backend_addr>|'${container_name}'|' \
+                    -e 's|<backend_port>|'${BACKEND_PORT}'|' \
+                    -e 's|<frontend_domain>|'${domain_name}'|' \
+                    -e 's|<frontend_path>|'${FRONTEND_PATH}'|' \
+                    -e 's|<auth_file>|'${auth_file}'|' /templates/path_auth.tmpl > ${path_file}
+                echo "${FRONTEND_AUTH}" > ${auth_file}
+            else
+                sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
+                    -e 's|<backend_addr>|'${container_name}'|' \
+                    -e 's|<backend_port>|'${BACKEND_PORT}'|' \
+                    -e 's|<frontend_path>|'${FRONTEND_PATH}'|' /templates/path.tmpl > ${path_file}
+            fi
+        fi
+    done
 }
 
 f_gen_certs() {
