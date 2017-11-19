@@ -56,7 +56,8 @@ RUN export BUILD_DEPS="build-base \
                     cmake \
                     binutils \
                     linux-headers \
-                    jemalloc-dev" \
+                    jemalloc-dev \
+                    py-pip" \
     && NB_CORES=${BUILD_CORES-$(grep -c "processor" /proc/cpuinfo)} \
     && apk add --no-cache ${BUILD_DEPS} \
                 s6 \
@@ -72,6 +73,8 @@ RUN export BUILD_DEPS="build-base \
                 jemalloc \
                 bind-tools \
                 libressl \
+                python \
+                py-setuptools \
     && cd /tmp \
     # Download source
     && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 /tmp/headers-more-nginx-module \
@@ -123,9 +126,11 @@ RUN export BUILD_DEPS="build-base \
     # ct-submit
     && go get github.com/grahamedgecombe/ct-submit \
     && mv /tmp/go/bin/ct-submit /usr/local/bin/ct-submit \
+    # j2cli
+    && pip install j2cli \
     # Cleanup
     && apk del --no-cache ${BUILD_DEPS} \
-    && rm -rf /tmp/*
+    && rm -rf /tmp/* /root/.cache
 
 COPY rootfs /
 RUN chmod +x /usr/local/bin/startup /etc/s6.d/*/*
@@ -137,8 +142,8 @@ ENV UID=991 \
     EMAIL=admin@mydomain.local \
     SWARM=disable \
     TLS_VERSIONS="TLSv1.1 TLSv1.2" \
-    CIPHER_SUITE="ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256" \
-    ECDH_CURVE="P-521:P-384"
+    CIPHER_SUITE="EECDH+CHACHA20:EECDH+AESGCM" \
+    ECDH_CURVE="X25519:P-521:P-384"
 
 ENTRYPOINT ["/usr/local/bin/startup"]
 CMD ["/bin/s6-svscan", "/etc/s6.d"]

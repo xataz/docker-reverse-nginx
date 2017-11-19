@@ -31,32 +31,18 @@ f_log() {
 }
 
 f_gen_sites_enabled() {
-    if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
-        template_sites=/templates/sites-enabled_ssl.tmpl
-    else
-        template_sites=/templates/sites-enabled.tmpl
-    fi
+    template_sites=/templates/sites-enabled.tmpl
+
     for domain_name in ${FRONTEND_DOMAIN}; do
-        sed -e 's|<frontend_domain>|'${domain_name}'|' ${template_sites} > /nginx/sites-enabled/${domain_name}.conf
-        if [[ "${FRONTEND_HSTS}" == "false" ]] || [[ "${FRONTEND_HSTS}" == "disable" ]]; then
-            sed -i -e "s|include /nginx/conf.d/hsts.conf|#include /nginx/conf.d/hsts.conf|g" /nginx/sites-enabled/${domain_name}.conf
-        fi
-        if [[ "${FRONTEND_HEADERS}" == "false" ]] || [[ "${FRONTEND_HEADERS}" == "disable" ]]; then
-            sed -i -e "s|include /nginx/conf.d/headers.conf|#include /nginx/conf.d/headers.conf|g" /nginx/sites-enabled/${domain_name}.conf
-        fi
-        if [[ "${FRONTEND_OCSP}" == "false" ]] || [[ "${FRONTEND_OCSP}" == "disable" ]]; then
-            sed -i -e "s|include /nginx/conf.d/ocsp.conf|#include /nginx/conf.d/ocsp.conf|g" /nginx/sites-enabled/${domain_name}.conf
-        fi
-        if [[ "${FRONTEND_CT}" == "false" ]] || [[ "${FRONTEND_CT}" == "disable" ]]; then
-            sed -i -e "s|ssl_ct_static_scts|#ssl_ct_static_scts|g" /nginx/sites-enabled/${domain_name}.conf
-            sed -i -e "s|include /nginx/conf.d/ct.conf|#include /nginx/conf.d/ct.conf|g" /nginx/sites-enabled/${domain_name}.conf
-        fi
+        export domain_name
+            j2 ${template_sites} > /nginx/sites-enabled/${domain_name}.conf
     done
 }
 
 f_gen_location() {
     container_name=$1
     for domain_name in ${FRONTEND_DOMAIN}; do
+        export domain_name
         if [ ! -d /nginx/path.d/${domain_name} ]; then
             mkdir -p /nginx/path.d/${domain_name}
         fi
@@ -71,18 +57,13 @@ f_gen_location() {
         if [ ! -e ${path_file} ]; then
             if [ "${FRONTEND_AUTH}" != "" ]; then
                 mkdir -p /nginx/auth/${domain_name}
-                sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
-                    -e 's|<backend_addr>|'${container_name}'|' \
-                    -e 's|<backend_port>|'${BACKEND_PORT}'|' \
-                    -e 's|<frontend_domain>|'${domain_name}'|' \
-                    -e 's|<frontend_path>|'${FRONTEND_PATH}'|' \
-                    -e 's|<auth_file>|'${auth_file}'|' /templates/path_auth.tmpl > ${path_file}
-                echo "${FRONTEND_AUTH}" > ${auth_file}
-            else
-                sed -e 's|<frontend_domain_max_body_size>|'${FRONTEND_MAX_BODY_SIZE}'|' \
-                    -e 's|<backend_addr>|'${container_name}'|' \
-                    -e 's|<backend_port>|'${BACKEND_PORT}'|' \
-                    -e 's|<frontend_path>|'${FRONTEND_PATH}'|' /templates/path.tmpl > ${path_file}
+                export frontend_path=${FRONTEND_PATH}
+                export backend_addr=${container_name}
+                export frontend_path=${FRONTEND_PATH}
+                export auth_file=${auth_file}
+
+                j2 /templates/path.tmpl > ${path_file}
+                j2 /templates/auth.tmpl > ${path_auth}
             fi
         fi
     done
@@ -91,6 +72,7 @@ f_gen_location() {
 f_gen_certs() {
     container_name=$1
     for domain_name in ${FRONTEND_DOMAIN}; do
+        export domain_name
         if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
             CERTFILE=/nginx/ssl/certificates/${domain_name}.cert.pem
             KEYFILE=/nginx/ssl/certificates/${domain_name}.key
@@ -113,6 +95,7 @@ f_gen_certs() {
 f_gen_scts() {
     container_name=$1
     for domain_name in ${FRONTEND_DOMAIN}; do
+        export domain_name
         if [ "${FRONTEND_CT}" == "true" ] || [ "${FRONTEND_CT}" == "enable" ]; then
             mkdir -p /nginx/ssl/timestamps/${domain_name}
             FULLCHAINFILE=/nginx/ssl/certificates/${domain_name}.crt
@@ -125,7 +108,7 @@ f_gen_scts() {
 }
 
 f_make_conf() {
-    FRONTEND_DOMAIN=(mydomain.local)
+    FRONTEND_DOMAIN=mydomain.local
     FRONTEND_MAX_BODY_SIZE=200M
     FRONTEND_SSLTYPE=ec384
     BACKEND_PORT=8080
@@ -143,35 +126,68 @@ f_make_conf() {
         for label in ${CONTAINER_LABELS}; do
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
-                    FRONTEND_DOMAIN=()
+                    FRONTEND_DOMAIN=""
                     FRONTEND_DOMAIN=$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.auth")
                     FRONTEND_AUTH="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.ssltype")
                     FRONTEND_SSLTYPE="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.domain_max_body_size")
                     FRONTEND_MAX_BODY_SIZE="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.ssl")
                     FRONTEND_SSL="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.backend.port")
                     BACKEND_PORT="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.hsts")
                     FRONTEND_HSTS="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.ocsp")
                     FRONTEND_OCSP="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
                 ;;
                 "reverse.frontend.ct")
                     FRONTEND_CT="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
+                ;;
+                "reverse.custom.*")
+
                 ;;
             esac
         done
