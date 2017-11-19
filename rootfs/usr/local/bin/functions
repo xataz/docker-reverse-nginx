@@ -36,7 +36,7 @@ f_gen_sites_enabled() {
     else
         template_sites=/templates/sites-enabled.tmpl
     fi
-    for domain_name in ${(z)FRONTEND_DOMAIN}; do
+    for domain_name in ${FRONTEND_DOMAIN[@]}; do
         sed -e 's|<frontend_domain>|'${domain_name}'|' ${template_sites} > /nginx/sites-enabled/${domain_name}.conf
         if [[ "${FRONTEND_HSTS}" == "false" ]] || [[ "${FRONTEND_HSTS}" == "disable" ]]; then
             sed -i -e "s|include /nginx/conf.d/hsts.conf|#include /nginx/conf.d/hsts.conf|g" /nginx/sites-enabled/${domain_name}.conf
@@ -56,7 +56,7 @@ f_gen_sites_enabled() {
 
 f_gen_location() {
     container_name=$1
-    for domain_name in ${(z)FRONTEND_DOMAIN}; do
+    for domain_name in ${FRONTEND_DOMAIN[@]}; do
         if [ ! -d /nginx/path.d/${domain_name} ]; then
             mkdir -p /nginx/path.d/${domain_name}
         fi
@@ -90,7 +90,7 @@ f_gen_location() {
 
 f_gen_certs() {
     container_name=$1
-    for domain_name in ${(z)FRONTEND_DOMAIN}; do
+    for domain_name in ${FRONTEND_DOMAIN[@]}; do
         if [ "${FRONTEND_SSL}" == "enable" ]; then
             CERTFILE=/nginx/ssl/certificates/${domain_name}.cert.pem
             KEYFILE=/nginx/ssl/certificates/${domain_name}.key
@@ -123,7 +123,7 @@ f_gen_scts() {
 }
 
 f_make_conf() {
-    FRONTEND_DOMAIN=mydomain.local
+    FRONTEND_DOMAIN=(mydomain.local)
     FRONTEND_MAX_BODY_SIZE=200M
     FRONTEND_SSLTYPE=ec384
     BACKEND_PORT=8080
@@ -140,8 +140,8 @@ f_make_conf() {
         for label in ${CONTAINER_LABELS}; do
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
-                    FRONTEND_DOMAIN=""
-                    FRONTEND_DOMAIN="$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')"
+                    FRONTEND_DOMAIN=()
+                    FRONTEND_DOMAIN=($(echo ${label} | awk '{print $2}' | sed 's/,/ /g'))
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
@@ -182,7 +182,7 @@ f_make_conf() {
 
 
 f_remove_conf() {
-    FRONTEND_DOMAIN=mydomain.local
+    FRONTEND_DOMAIN=()
     FRONTEND_PATH="/"
     FRONTEND_SSL=disable
     FRONTEND_AUTH=""
@@ -193,8 +193,8 @@ f_remove_conf() {
         for label in ${CONTAINER_LABELS}; do
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
-                    FRONTEND_DOMAIN=""
-                    FRONTEND_DOMAIN="$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')"
+                    FRONTEND_DOMAIN=()
+                    FRONTEND_DOMAIN=($(echo ${label} | awk '{print $2}' | sed 's/,/ /g'))
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
@@ -204,18 +204,18 @@ f_remove_conf() {
         done
     fi
 
-    for domain_name in ${(z)FRONTEND_DOMAIN}; do
-        rm -f /nginx/sites-enabled/${FRONTEND_DOMAIN}.conf
+    for domain_name in ${FRONTEND_DOMAIN[@]}; do
+        rm -f /nginx/sites-enabled/${domain_name}.conf
 
         if [ "${FRONTEND_PATH}" == "/" ]; then
-            rm -f /nginx/path.d/${FRONTEND_DOMAIN}/base.conf
-            if [ -e /nginx/auth/${FRONTEND_DOMAIN}/base.auth ]; then
-                rm -f /nginx/auth/${FRONTEND_DOMAIN}/base.auth
+            rm -f /nginx/path.d/${domain_name}/base.conf
+            if [ -e /nginx/auth/${domain_name}/base.auth ]; then
+                rm -f /nginx/auth/${domain_name}/base.auth
             fi
         else
-            rm -f /nginx/path.d/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.conf
-            if [ -e /nginx/auth/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.auth ]; then
-                rm -f /nginx/auth/${FRONTEND_DOMAIN}/${FRONTEND_PATH}.auth
+            rm -f /nginx/path.d/${domain_name}/${FRONTEND_PATH}.conf
+            if [ -e /nginx/auth/${domain_name}/${FRONTEND_PATH}.auth ]; then
+                rm -f /nginx/auth/${domain_name}/${FRONTEND_PATH}.auth
             fi
         fi
     done
