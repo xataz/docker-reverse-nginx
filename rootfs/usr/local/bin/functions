@@ -265,7 +265,7 @@ f_container_die() {
 f_analyze_line() {
     TYPE=$(echo $line | jq '.Type' | sed 's/"//g')
     ACTION=$(echo $line | jq '.Action' | sed 's/"//g')
-    if [ "${SWARM}" == "enabled" ]; then
+    if [[ "${SWARM}" == "enable" ]] || [[ "${SWARM}" == "true" ]]; then
         SERVICE_NAME=$(echo $line | jq '.Actor.Attributes.name' | sed 's/"//g')
         if [ "${TYPE}" == "service" ]; then
             if [ "${ACTION}" == "create" ]; then
