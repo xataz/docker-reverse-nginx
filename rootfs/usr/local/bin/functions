@@ -36,7 +36,7 @@ f_gen_sites_enabled() {
     else
         template_sites=/templates/sites-enabled.tmpl
     fi
-    for domain_name in ${FRONTEND_DOMAIN[@]}; do
+    for domain_name in ${FRONTEND_DOMAIN}; do
         sed -e 's|<frontend_domain>|'${domain_name}'|' ${template_sites} > /nginx/sites-enabled/${domain_name}.conf
         if [[ "${FRONTEND_HSTS}" == "false" ]] || [[ "${FRONTEND_HSTS}" == "disable" ]]; then
             sed -i -e "s|include /nginx/conf.d/hsts.conf|#include /nginx/conf.d/hsts.conf|g" /nginx/sites-enabled/${domain_name}.conf
@@ -56,7 +56,7 @@ f_gen_sites_enabled() {
 
 f_gen_location() {
     container_name=$1
-    for domain_name in ${FRONTEND_DOMAIN[@]}; do
+    for domain_name in ${FRONTEND_DOMAIN}; do
         if [ ! -d /nginx/path.d/${domain_name} ]; then
             mkdir -p /nginx/path.d/${domain_name}
         fi
@@ -90,7 +90,7 @@ f_gen_location() {
 
 f_gen_certs() {
     container_name=$1
-    for domain_name in ${FRONTEND_DOMAIN[@]}; do
+    for domain_name in ${FRONTEND_DOMAIN}; do
         if [ "${FRONTEND_SSL}" == "enable" ]; then
             CERTFILE=/nginx/ssl/certificates/${domain_name}.cert.pem
             KEYFILE=/nginx/ssl/certificates/${domain_name}.key
@@ -141,7 +141,7 @@ f_make_conf() {
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
                     FRONTEND_DOMAIN=()
-                    FRONTEND_DOMAIN=($(echo ${label} | awk '{print $2}' | sed 's/,/ /g'))
+                    FRONTEND_DOMAIN=$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
@@ -194,7 +194,7 @@ f_remove_conf() {
             case "$(echo ${label} | awk '{print $1}')" in
                 "reverse.frontend.domain")
                     FRONTEND_DOMAIN=()
-                    FRONTEND_DOMAIN=($(echo ${label} | awk '{print $2}' | sed 's/,/ /g'))
+                    FRONTEND_DOMAIN=$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')
                 ;;
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
@@ -204,7 +204,7 @@ f_remove_conf() {
         done
     fi
 
-    for domain_name in ${FRONTEND_DOMAIN[@]}; do
+    for domain_name in ${FRONTEND_DOMAIN}; do
         rm -f /nginx/sites-enabled/${domain_name}.conf
 
         if [ "${FRONTEND_PATH}" == "/" ]; then
