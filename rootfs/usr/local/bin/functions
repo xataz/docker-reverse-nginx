@@ -31,7 +31,7 @@ f_log() {
 }
 
 f_gen_sites_enabled() {
-    if [ "${FRONTEND_SSL}" == "enable" ]; then
+    if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
         template_sites=/templates/sites-enabled_ssl.tmpl
     else
         template_sites=/templates/sites-enabled.tmpl
@@ -91,7 +91,7 @@ f_gen_location() {
 f_gen_certs() {
     container_name=$1
     for domain_name in ${FRONTEND_DOMAIN}; do
-        if [ "${FRONTEND_SSL}" == "enable" ]; then
+        if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
             CERTFILE=/nginx/ssl/certificates/${domain_name}.cert.pem
             KEYFILE=/nginx/ssl/certificates/${domain_name}.key
             CHAINFILE=/nginx/ssl/certificates/${domain_name}.chain.pem
@@ -113,7 +113,7 @@ f_gen_certs() {
 f_gen_scts() {
     container_name=$1
     for domain_name in ${FRONTEND_DOMAIN}; do
-        if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_CT}" == "enable" ]; then
+        if [ "${FRONTEND_CT}" == "true" ] || [ "${FRONTEND_CT}" == "enable" ]; then
             mkdir -p /nginx/ssl/timestamps/${domain_name}
             FULLCHAINFILE=/nginx/ssl/certificates/${domain_name}.crt
             SCTFILE=nginx/ssl/timestamps/${domain_name}/fullchain.sct
@@ -181,7 +181,7 @@ f_make_conf() {
         f_log INF "             auth=${FRONTEND_AUTH}" 
         f_log INF "             port=${BACKEND_PORT}"
         f_log INF "             ssl=${FRONTEND_SSL}"
-        if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_CT}" == "enable" ]; then 
+        if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_SSL}" == "enable" ]; then 
                 f_log INF "             ssl_type=${FRONTEND_SSLTYPE}"
                 f_log INF "             hsts=${FRONTEND_HSTS}"
                 f_log INF "             ocsp=${FRONTEND_OCSP}"
