@@ -60,11 +60,12 @@ f_gen_location() {
             export frontend_path=${FRONTEND_PATH}
             export backend_addr=${container_name}
             export frontend_path=${FRONTEND_PATH}
+            export backend_port=${BACKEND_PORT}
             export auth_file=${auth_file}
             export frontend_domain_max_body_size=${FRONTEND_MAX_BODY_SIZE}
 
             j2 /templates/path.tmpl > ${path_file}
-            j2 /templates/auth.tmpl > ${path_auth}
+            j2 /templates/auth.tmpl > ${auth_file}
         fi
     done
 }
