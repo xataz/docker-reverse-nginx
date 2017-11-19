@@ -19,24 +19,18 @@ server {
     ssl_certificate /nginx/ssl/certificates/{{ domain_name }}.crt;
     ssl_certificate_key /nginx/ssl/certificates/{{ domain_name }}.key;
     ssl_trusted_certificate /nginx/ssl/certificates/{{ domain_name }}.chain.pem;
-    ssl_ct_static_scts /nginx/ssl/timestamps/{{ domain_name }};
 
     include /nginx/conf.d/ssl.conf;
     include /nginx/conf.d/headers.conf;
-    {% if reverse_frontend_hsts is defined %}
-        {% if reverse_frontend_hsts == "enable" or reverse_frontend_hsts == "true" %}
-            include /nginx/conf.d/hsts.conf;
-        {% endif %}
+    {% if reverse_frontend_hsts is defined and (reverse_frontend_hsts == "enable" or reverse_frontend_hsts == "true") %}
+        include /nginx/conf.d/hsts.conf;
     {% endif %}
-    {% if reverse_frontend_ocsp is defined %}
-        {% if reverse_frontend_ocsp == "enable" or reverse_frontend_ocsp == "true" %}
-            include /nginx/conf.d/ocsp.conf;
-        {% endif %}
+    {% if reverse_frontend_ocsp is defined and (reverse_frontend_ocsp == "enable" or reverse_frontend_ocsp == "true") %}
+        include /nginx/conf.d/ocsp.conf;
     {% endif %}
-    {% if reverse_frontend_ct is defined %}
-        {% if reverse_frontend_ct == "enable" or reverse_frontend_ct == "true" %}
-            include /nginx/conf.d/ct.conf;
-        {% endif %}
+    {% if reverse_frontend_ct is defined and (reverse_frontend_ct == "enable" or reverse_frontend_ct == "true") %}
+        ssl_ct_static_scts /nginx/ssl/timestamps/{{ domain_name }};
+        include /nginx/conf.d/ct.conf;
     {% endif %}
     include /nginx/path.d/{{ domain_name }}/*.conf;
 
