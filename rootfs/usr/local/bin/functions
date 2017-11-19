@@ -51,7 +51,7 @@ f_gen_sites_enabled() {
             sed -i -e "s|ssl_ct_static_scts|#ssl_ct_static_scts|g" /nginx/sites-enabled/${domain_name}.conf
             sed -i -e "s|include /nginx/conf.d/ct.conf|#include /nginx/conf.d/ct.conf|g" /nginx/sites-enabled/${domain_name}.conf
         fi
-    do
+    done
 }
 
 f_gen_location() {

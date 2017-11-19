@@ -80,6 +80,7 @@ RUN export BUILD_DEPS="build-base \
                 libstdc++ \
                 jemalloc \
                 bind-tools \
+                libressl \
     && cd /tmp \
     # Download source
     && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 /tmp/headers-more-nginx-module \
