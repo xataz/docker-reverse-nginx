@@ -136,56 +136,47 @@ f_make_conf() {
                 "reverse.frontend.path")
                     FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_PATH})
                 ;;
                 "reverse.frontend.auth")
                     FRONTEND_AUTH="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_AUTH})
                 ;;
                 "reverse.frontend.ssltype")
                     FRONTEND_SSLTYPE="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_SSLTYPE})
                 ;;
                 "reverse.frontend.domain_max_body_size")
                     FRONTEND_MAX_BODY_SIZE="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_MAX_BODY_SIZE})
                 ;;
                 "reverse.frontend.ssl")
                     FRONTEND_SSL="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_SSL})
                 ;;
                 "reverse.backend.port")
                     BACKEND_PORT="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${BACKEND_PORT})
                 ;;
                 "reverse.frontend.hsts")
                     FRONTEND_HSTS="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_HSTS})
                 ;;
                 "reverse.frontend.ocsp")
                     FRONTEND_OCSP="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_OCSP})
                 ;;
                 "reverse.frontend.ct")
                     FRONTEND_CT="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
-                    VALUE=$(echo ${label} | awk '{print $2}')
-                    export $(echo ${KEY}=${VALUE})
+                    export $(echo ${KEY}=${FRONTEND_CT})
                 ;;
                 "reverse.custom.*")
 
