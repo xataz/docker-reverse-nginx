@@ -112,14 +112,16 @@ f_gen_certs() {
 
 f_gen_scts() {
     container_name=$1
-    if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_CT}" == "true" ]; then
-        mkdir -p /nginx/ssl/timestamps/${FRONTEND_DOMAIN}
-        FULLCHAINFILE=/nginx/ssl/certificates/${FRONTEND_DOMAIN}.crt
-        SCTFILE=nginx/ssl/timestamps/${FRONTEND_DOMAIN}/fullchain.sct
-        if [ ! -f ${SCTFILE} ]; then
-            ct-submit ct.googleapis.com/pilot <${FULLCHAINFILE}>${SCTFILE}
+    for domain_name in ${FRONTEND_DOMAIN}; do
+        if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_CT}" == "enable" ]; then
+            mkdir -p /nginx/ssl/timestamps/${domain_name}
+            FULLCHAINFILE=/nginx/ssl/certificates/${domain_name}.crt
+            SCTFILE=nginx/ssl/timestamps/${domain_name}/fullchain.sct
+            if [ ! -f ${SCTFILE} ]; then
+                ct-submit ct.googleapis.com/pilot <${FULLCHAINFILE}>${SCTFILE}
+            fi
         fi
-    fi
+    done
 }
 
 f_make_conf() {
@@ -174,7 +176,17 @@ f_make_conf() {
             esac
         done
         IFS=${OLD_IFS}
-        f_log INF "Generate files for ${FRONTEND_DOMAIN}, with path=${FRONTEND_PATH}, auth=${FRONTEND_AUTH}, ssl_type=${FRONTEND_SSLTYPE}, ssl=${FRONTEND_SSL} and port=${BACKEND_PORT}"
+        f_log INF "Generate files for ${FRONTEND_DOMAIN}, with options :"
+        f_log INF "             path=${FRONTEND_PATH}"
+        f_log INF "             auth=${FRONTEND_AUTH}" 
+        f_log INF "             port=${BACKEND_PORT}"
+        f_log INF "             ssl=${FRONTEND_SSL}"
+        if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_CT}" == "enable" ]; then 
+                f_log INF "             ssl_type=${FRONTEND_SSLTYPE}"
+                f_log INF "             hsts=${FRONTEND_HSTS}"
+                f_log INF "             ocsp=${FRONTEND_OCSP}"
+                f_log INF "             ct=${FRONTEND_CT}"
+        fi
         f_gen_location ${container_name}
         f_gen_sites_enabled
         f_gen_certs ${container_name}
