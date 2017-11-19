@@ -181,7 +181,7 @@ f_make_conf() {
         f_log INF "             auth=${FRONTEND_AUTH}" 
         f_log INF "             port=${BACKEND_PORT}"
         f_log INF "             ssl=${FRONTEND_SSL}"
-        if [ "${FRONTEND_SSL}" == "true" ] && [ "${FRONTEND_SSL}" == "enable" ]; then 
+        if [ "${FRONTEND_SSL}" == "true" ] || [ "${FRONTEND_SSL}" == "enable" ]; then 
                 f_log INF "             ssl_type=${FRONTEND_SSLTYPE}"
                 f_log INF "             hsts=${FRONTEND_HSTS}"
                 f_log INF "             ocsp=${FRONTEND_OCSP}"

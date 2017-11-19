@@ -120,6 +120,9 @@ RUN export BUILD_DEPS="build-base \
     && git config --global http.https://gopkg.in.followRedirects true \
     && go get github.com/xenolf/lego \
     && mv /tmp/go/bin/lego /usr/local/bin/lego \
+    # ct-submit
+    && go get github.com/grahamedgecombe/ct-submit \
+    && mv /tmp/go/bin/ct-submit /usr/local/bin/ct-submit \
     # Cleanup
     && apk del --no-cache ${BUILD_DEPS} \
     && rm -rf /tmp/*
