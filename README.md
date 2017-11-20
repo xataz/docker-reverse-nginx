@@ -55,8 +55,8 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 * EMAIL : Mail address for letsencrypt
 * SWARM : enable if use this reverse with docker swarm mode (default : disable)
 * TLS_VERSION : Choose tls version separate by space (default : "TLSv1.1 TLSv1.2")
-* CIPHER_SUITE : Choose cipher suite (default : "ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305-D:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256")
-* ECDH_CURVE : Choose ecdh curve (default : "P-521:P-384:secp521r1:secp384r1")
+* CIPHER_SUITE : Choose cipher suite (default : "EECDH+CHACHA20:EECDH+AESGCM")
+* ECDH_CURVE : Choose ecdh curve (default : "X25519:P-521:P-384")
 
 ### Volumes
 * /nginx/ssl : For certificate persistance
