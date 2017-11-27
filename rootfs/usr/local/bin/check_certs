@@ -12,6 +12,8 @@ f_check_certs() {
         KEYFILE=/nginx/ssl/certificates/${domain}.key
         CHAINFILE=/nginx/ssl/certificates/${domain}.chain.pem
         FULLCHAINFILE=/nginx/ssl/certificates/${domain}.crt
+        SCTFILE=/nginx/ssl/timestamps/${domain}/fullchain.sct
+
         SSL_ALGO="$(openssl x509 -text -in ${FULLCHAINFILE} | grep "Public Key Algorithm" | awk '{print $4}')"
         SSL_SIZE="$(openssl x509 -text -in ${FULLCHAINFILE} | grep "Public-Key" | sed 's/^.*(\(.*\) bit)$/\1/')"
 
@@ -33,6 +35,9 @@ f_check_certs() {
                     head -$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1) ${FULLCHAINFILE} > ${CERTFILE}
                     tail -$(($(wc -l ${FULLCHAINFILE} | awk '{print $1}')-$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1))) ${FULLCHAINFILE} > ${CHAINFILE}
                     RELOAD_NGINX=1
+                    if [ -f ${SCTFILE} ]; then
+                        ct-submit ct.googleapis.com/pilot <${FULLCHAINFILE}>${SCTFILE}
+                    fi
                     f_log INF "New Certificate for ${domain} generated" 
                 fi
             else 
