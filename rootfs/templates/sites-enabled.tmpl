@@ -1,42 +1,55 @@
 server {
     listen 8080;
-    server_name {{ domain_name }};
+    server_name {{ .domain_name }};
 
-    {% if reverse_frontend_ssl is defined and (reverse_frontend_ssl == "enable" or reverse_frontend_ssl == "true") %}
-        rewrite ^ https://{{ domain_name }}:443$request_uri? permanent;
-    {% else %}
+    {{ if and .reverse_frontend_ssl}} 
+        {{ if or (eq .reverse_frontend_ssl "enable") (eq .reverse_frontend_ssl "true") }}
+            rewrite ^ https://{{ .domain_name }}:443$request_uri? permanent;
+        {{ else }}
+            include /nginx/conf.d/headers.conf;
+            include /nginx/path.d/{{ .domain_name }}/*.conf;
+        {{ end }}
+    {{ else }}
         include /nginx/conf.d/headers.conf;
-        include /nginx/path.d/{{ domain_name }}/*.conf;
-    {% endif %}
+        include /nginx/path.d/{{ .domain_name }}/*.conf;
+    {{ end }}
 }
 
-{% if reverse_frontend_ssl is defined and (reverse_frontend_ssl == "enable" or reverse_frontend_ssl == "true") %}
-server {
-    listen 8443 ssl http2;
-    server_name {{ domain_name }};
-    index index.html index.php index.htm;
+{{ if and .reverse_frontend_ssl}} 
+    {{ if or (eq .reverse_frontend_ssl "enable") (eq .reverse_frontend_ssl "true") }}
+        server {
+            listen 8443 ssl http2;
+            server_name {{ .domain_name }};
+            index index.html index.php index.htm;
 
-    ssl_certificate /nginx/ssl/certificates/{{ domain_name }}.crt;
-    ssl_certificate_key /nginx/ssl/certificates/{{ domain_name }}.key;
-    ssl_trusted_certificate /nginx/ssl/certificates/{{ domain_name }}.chain.pem;
+            ssl_certificate /nginx/ssl/certificates/{{ .domain_name }}.crt;
+            ssl_certificate_key /nginx/ssl/certificates/{{ .domain_name }}.key;
+            ssl_trusted_certificate /nginx/ssl/certificates/{{ .domain_name }}.chain.pem;
 
-    include /nginx/conf.d/ssl.conf;
-    include /nginx/conf.d/headers.conf;
-    {% if reverse_frontend_hsts is defined and (reverse_frontend_hsts == "enable" or reverse_frontend_hsts == "true") %}
-        include /nginx/conf.d/hsts.conf;
-    {% endif %}
-    {% if reverse_frontend_ocsp is defined and (reverse_frontend_ocsp == "enable" or reverse_frontend_ocsp == "true") %}
-        include /nginx/conf.d/ocsp.conf;
-    {% endif %}
-    {% if reverse_frontend_ct is defined and (reverse_frontend_ct == "enable" or reverse_frontend_ct == "true") %}
-        ssl_ct_static_scts /nginx/ssl/timestamps/{{ domain_name }};
-        include /nginx/conf.d/ct.conf;
-    {% endif %}
-    include /nginx/path.d/{{ domain_name }}/*.conf;
+            include /nginx/conf.d/ssl.conf;
+            include /nginx/conf.d/headers.conf;
+            {{ if .reverse_frontend_hsts }} 
+                {{ if or (eq .reverse_frontend_hsts "enable") (eq .reverse_frontend_hsts "true") }}
+                    include /nginx/conf.d/hsts.conf;
+                {{ end }}
+            {{ end }}
+            {{ if and .reverse_frontend_ocsp }}
+                {{ if or (eq .reverse_frontend_ocsp "enable") (eq .reverse_frontend_ocsp "true") }}
+                    include /nginx/conf.d/ocsp.conf;
+                {{ end }}
+            {{ end }}
+            {{ if and .reverse_frontend_ct }}
+                {{ if or (eq .reverse_frontend_ct "enable") (eq .reverse_frontend_ct "true") }}
+                    ssl_ct_static_scts /nginx/ssl/timestamps/{{ .domain_name }};
+                    include /nginx/conf.d/ct.conf;
+                {{ end }}
+            {{ end }}
+            include /nginx/path.d/{{ .domain_name }}/*.conf;
 
-    location ~ /\.well-known/acme-challenge {
-        root /nginx/www/{{ domain_name }};
-        allow all;
-    }
-}
-{% endif %}
+            location ~ /\.well-known/acme-challenge {
+                root /nginx/www/{{ .domain_name }};
+                allow all;
+            }
+        }
+    {{ end }}
+{{ end }}

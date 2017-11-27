@@ -56,8 +56,7 @@ RUN export BUILD_DEPS="build-base \
                     cmake \
                     binutils \
                     linux-headers \
-                    jemalloc-dev \
-                    py-pip" \
+                    jemalloc-dev" \
     && NB_CORES=${BUILD_CORES-$(grep -c "processor" /proc/cpuinfo)} \
     && apk add --no-cache ${BUILD_DEPS} \
                 s6 \
@@ -73,8 +72,6 @@ RUN export BUILD_DEPS="build-base \
                 jemalloc \
                 bind-tools \
                 libressl \
-                python \
-                py-setuptools \
     && cd /tmp \
     # Download source
     && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 /tmp/headers-more-nginx-module \
@@ -126,8 +123,9 @@ RUN export BUILD_DEPS="build-base \
     # ct-submit
     && go get github.com/grahamedgecombe/ct-submit \
     && mv /tmp/go/bin/ct-submit /usr/local/bin/ct-submit \
-    # j2cli
-    && pip install j2cli \
+    # gucci
+    && go get github.com/noqcks/gucci \
+    && mv /tmp/go/bin/gucci /usr/local/bin/gucci \
     # Cleanup
     && apk del --no-cache ${BUILD_DEPS} \
     && rm -rf /tmp/* /root/.cache

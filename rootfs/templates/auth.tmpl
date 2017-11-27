@@ -1,3 +1,3 @@
-{% for user in frontend_auth.split(',') %}
-{{user}}
-{% endfor %}
+{{ range split .frontend_auth "," }}
+{{ . }}
+{{ end }}
