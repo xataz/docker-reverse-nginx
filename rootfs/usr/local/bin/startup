@@ -29,7 +29,7 @@ if [ "$(grep ${UID} /etc/passwd)" == "" ]; then
     adduser -H -s /bin/sh -D -G ${GROUP_NAME} -u ${UID} reverse
 fi
 f_log INF "Create folder"
-mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled /nginx/ssl /nginx/ssl/selfsigned/dhparam
+mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled /nginx/ssl/private
 
 # Generate nginx configuration
 f_log INF "Generate SSL configuration"
@@ -37,6 +37,9 @@ sed -i "s/<ssl_protocols>/${TLS_VERSIONS}/" /nginx/conf.d/ssl.conf
 sed -i 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
 sed -i "s/<ecdh_curve>/${ECDH_CURVE}/" /nginx/conf.d/ssl.conf
 
+# Download OCSP
+f_log INF "Download Letsencrypt Certs"
+rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/ocsp-certs.pem > /dev/null
 
 # Generate file
 date +%s > /tmp/timestamp
