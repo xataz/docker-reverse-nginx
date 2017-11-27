@@ -9,7 +9,7 @@
 > If you don't trust, you can build yourself.
 
 ## Tag available
-* latest, mainline, 1.13.6, 1.13, 1.0.0, 1.0 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
+* latest, mainline, 1.13.7, 1.13 [(Dockerfile)](https://github.com/xataz/dockerfiles/blob/master/reverse-nginx/Dockerfile)
 
 **I've created new version rules, Before, I used nginx version, but now I will use [MAJOR-VERSION].[MINOR-VERSION].[BUG-FIXES].**
 **For transition, I will use both notations**
