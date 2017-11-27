@@ -89,6 +89,7 @@ f_gen_certs() {
                 fi
                 [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
             fi
+            cat ${CHAINFILE} >> /nginx/ssl/private/ocsp-certs.pem
         fi
     done
 }
