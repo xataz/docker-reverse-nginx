@@ -24,7 +24,7 @@ server {
 
             ssl_certificate /nginx/ssl/certificates/{{ .domain_name }}.crt;
             ssl_certificate_key /nginx/ssl/certificates/{{ .domain_name }}.key;
-
+            
             include /nginx/conf.d/ssl.conf;
             include /nginx/conf.d/headers.conf;
             {{ if .reverse_frontend_hsts }} 
@@ -32,14 +32,14 @@ server {
                     include /nginx/conf.d/hsts.conf;
                 {{ end }}
             {{ end }}
-            {{ if and .reverse_frontend_ocsp }}
+            {{ if .reverse_frontend_ocsp }}
                 {{ if or (eq .reverse_frontend_ocsp "enable") (eq .reverse_frontend_ocsp "true") }}
                     include /nginx/conf.d/ocsp.conf;
                 {{ else }}
                     ssl_trusted_certificate /nginx/ssl/certificates/{{ .domain_name }}.chain.pem;
                 {{ end }}
             {{ end }}
-            {{ if and .reverse_frontend_ct }}
+            {{ if .reverse_frontend_ct }}
                 {{ if or (eq .reverse_frontend_ct "enable") (eq .reverse_frontend_ct "true") }}
                     ssl_ct_static_scts /nginx/ssl/timestamps/{{ .domain_name }};
                     include /nginx/conf.d/ct.conf;

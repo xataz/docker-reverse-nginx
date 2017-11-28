@@ -89,7 +89,6 @@ f_gen_certs() {
                 fi
                 [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
             fi
-            cat ${CHAINFILE} >> /nginx/ssl/private/ocsp-certs.pem
         fi
     done
 }
@@ -118,7 +117,7 @@ f_make_conf() {
     FRONTEND_SSL=disable
     FRONTEND_AUTH=""
     FRONTEND_HSTS=enable
-    FRONTEND_OCSP=disable
+    FRONTEND_OCSP=enable
     FRONTEND_CT=disable
 
     export reverse_frontend_domain=${FRONTEND_DOMAIN}
