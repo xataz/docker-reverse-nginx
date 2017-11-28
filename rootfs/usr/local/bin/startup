@@ -39,7 +39,7 @@ sed -i "s/<ecdh_curve>/${ECDH_CURVE}/" /nginx/conf.d/ssl.conf
 
 # Download OCSP
 f_log INF "Download Letsencrypt Certs"
-rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/ocsp-certs.pem > /dev/null
+rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/letsencrypt-certs.pem > /dev/null
 
 # Generate file
 date +%s > /tmp/timestamp

@@ -8,14 +8,12 @@ f_check_certs() {
     LIST_DOMAINS=$(ls /nginx/ssl/certificates | grep .crt | grep -v issuer | sed 's|.crt||g')
 
     for domain in ${LIST_DOMAINS}; do 
-        CERTFILE=/nginx/ssl/certificates/${domain}.cert.pem
+        CERTFILE=/nginx/ssl/certificates/${domain}.crt
         KEYFILE=/nginx/ssl/certificates/${domain}.key
-        CHAINFILE=/nginx/ssl/certificates/${domain}.chain.pem
-        FULLCHAINFILE=/nginx/ssl/certificates/${domain}.crt
         SCTFILE=/nginx/ssl/timestamps/${domain}/fullchain.sct
 
-        SSL_ALGO="$(openssl x509 -text -in ${FULLCHAINFILE} | grep "Public Key Algorithm" | awk '{print $4}')"
-        SSL_SIZE="$(openssl x509 -text -in ${FULLCHAINFILE} | grep "Public-Key" | sed 's/^.*(\(.*\) bit)$/\1/')"
+        SSL_ALGO="$(openssl x509 -text -in ${CERTFILE} | grep "Public Key Algorithm" | awk '{print $4}')"
+        SSL_SIZE="$(openssl x509 -text -in ${CERTFILE} | grep "Public-Key" | sed 's/^.*(\(.*\) bit)$/\1/')"
 
         if [ "${SSL_ALGO}" == "rsaEncryption" ]; then
             SSL_TYPE="rsa${SSL_SIZE}"
@@ -24,19 +22,17 @@ f_check_certs() {
         fi
 
         mkdir -p /nginx/www/${domain}
-        openssl x509 -checkend 864000 -noout -in "${FULLCHAINFILE}"
+        openssl x509 -checkend 864000 -noout -in "${CERTFILE}"
         if [ $? == 0 ]; then
             f_log INF "Certificate for ${domain} is good for another 10 days!"
         else
             f_log INF "Generate New Certificate for ${domain}"
             /usr/local/bin/lego -a -m ${EMAIL} -d ${domain} --path /nginx/ssl --webroot /nginx/www/${domain} -k ${SSL_TYPE} renew
             if [ $? == 0 ]; then
-                if [ -e ${FULLCHAINFILE} ]; then
-                    head -$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1) ${FULLCHAINFILE} > ${CERTFILE}
-                    tail -$(($(wc -l ${FULLCHAINFILE} | awk '{print $1}')-$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1))) ${FULLCHAINFILE} > ${CHAINFILE}
+                if [ -e ${CERTFILE} ]; then
                     RELOAD_NGINX=1
                     if [ -f ${SCTFILE} ]; then
-                        ct-submit ct.googleapis.com/pilot <${FULLCHAINFILE}>${SCTFILE}
+                        ct-submit ct.googleapis.com/pilot <${CERTFILE}>${SCTFILE}
                     fi
                     f_log INF "New Certificate for ${domain} generated" 
                 fi

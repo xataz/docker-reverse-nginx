@@ -24,6 +24,7 @@ server {
 
             ssl_certificate /nginx/ssl/certificates/{{ .domain_name }}.crt;
             ssl_certificate_key /nginx/ssl/certificates/{{ .domain_name }}.key;
+            ssl_trusted_certificate /nginx/ssl/private/letsencrypt-certs.pem;
             
             include /nginx/conf.d/ssl.conf;
             include /nginx/conf.d/headers.conf;
@@ -35,8 +36,6 @@ server {
             {{ if .reverse_frontend_ocsp }}
                 {{ if or (eq .reverse_frontend_ocsp "enable") (eq .reverse_frontend_ocsp "true") }}
                     include /nginx/conf.d/ocsp.conf;
-                {{ else }}
-                    ssl_trusted_certificate /nginx/ssl/certificates/{{ .domain_name }}.chain.pem;
                 {{ end }}
             {{ end }}
             {{ if .reverse_frontend_ct }}

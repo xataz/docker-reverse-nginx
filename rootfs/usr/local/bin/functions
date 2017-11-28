@@ -75,18 +75,12 @@ f_gen_certs() {
     for domain_name in ${FRONTEND_DOMAIN}; do
         export domain_name
         if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
-            CERTFILE=/nginx/ssl/certificates/${domain_name}.cert.pem
+            CERTFILE=/nginx/ssl/certificates/${domain_name}.crt
             KEYFILE=/nginx/ssl/certificates/${domain_name}.key
-            CHAINFILE=/nginx/ssl/certificates/${domain_name}.chain.pem
-            FULLCHAINFILE=/nginx/ssl/certificates/${domain_name}.crt
-            if [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ] || [ ! -e ${CHAINFILE} ] || [ ! -e ${FULLCHAINFILE} ]; then
+            if [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ]; then
                 mkdir -p /nginx/www/${domain_name}
                 /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
-                if [ $? == 0 ]; then
-                    head -$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1) ${FULLCHAINFILE} > ${CERTFILE}
-                    tail -$(($(wc -l ${FULLCHAINFILE} | awk '{print $1}')-$(grep -n "END CERTIFICATE" ${FULLCHAINFILE} | head -1 | cut -d: -f1))) ${FULLCHAINFILE} > ${CHAINFILE}
-                    chown -R ${UID}:${GID} /nginx/ssl/
-                fi
+                [[ $? == 0 ]] && chown -R ${UID}:${GID} /nginx/ssl/ || f_log ERR "New Certificate for ${domain_name} not generated"
                 [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
             fi
         fi
@@ -99,10 +93,10 @@ f_gen_scts() {
         export domain_name
         if [ "${FRONTEND_CT}" == "true" ] || [ "${FRONTEND_CT}" == "enable" ]; then
             mkdir -p /nginx/ssl/timestamps/${domain_name}
-            FULLCHAINFILE=/nginx/ssl/certificates/${domain_name}.crt
+            CERTFILE=/nginx/ssl/certificates/${domain_name}.crt
             SCTFILE=nginx/ssl/timestamps/${domain_name}/fullchain.sct
             if [ ! -f ${SCTFILE} ]; then
-                ct-submit ct.googleapis.com/pilot <${FULLCHAINFILE}>${SCTFILE}
+                ct-submit ct.googleapis.com/pilot <${CERTFILE}>${SCTFILE}
             fi
         fi
     done
