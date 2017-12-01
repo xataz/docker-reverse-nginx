@@ -9,7 +9,7 @@ if [ $? == 0 ]; then
     f_log INF "/var/run/docker.sock exist ..."
 else
     f_log ERR "/var/run/docker.sock don't exist ..."
-    exit 1
+     
 fi
 
 
@@ -42,24 +42,28 @@ f_log INF "Download Letsencrypt Certs"
 rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/letsencrypt-certs.pem > /dev/null
 
 # Generate file
-date +%s > /tmp/timestamp
-if [ "${SWARM}" == "enable" ]; then
-    for service in $(curl --unix-socket /var/run/docker.sock http://localhost/services 2> /dev/null | jq '.[].Spec.Name' | sed -e 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d' -e 's/"//g'); do 
-        CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-        if [ "${CONTAINER_LABELS}" == "" ]; then
-            CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.TaskTemplate.ContainerSpec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-        fi
-        if [ "${CONTAINER_LABELS}" != "" ]; then
-            f_make_conf ${service}
-        fi
-    done
+if [ -e /var/run/docker.sock ]; then
+    date +%s > /tmp/timestamp
+    if [ "${SWARM}" == "enable" ]; then
+        for service in $(curl --unix-socket /var/run/docker.sock http://localhost/services 2> /dev/null | jq '.[].Spec.Name' | sed -e 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d' -e 's/"//g'); do 
+            CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
+            if [ "${CONTAINER_LABELS}" == "" ]; then
+                CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${service} 2> /dev/null | jq '.Spec.TaskTemplate.ContainerSpec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
+            fi
+            if [ "${CONTAINER_LABELS}" != "" ]; then
+                f_make_conf ${service}
+            fi
+        done
+    else
+        for container in $(curl --unix-socket /var/run/docker.sock http://localhost/containers/json 2> /dev/null | jq '.[].Names' | sed 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d'); do 
+            CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${container}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
+            if [ "${CONTAINER_LABELS}" != "" ]; then
+                f_make_conf ${container}
+            fi
+        done
+    fi
 else
-    for container in $(curl --unix-socket /var/run/docker.sock http://localhost/containers/json 2> /dev/null | jq '.[].Names' | sed 's|.*"/\(.*\)"$|\1|;/\[/d;/\]/d'); do 
-        CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${container}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-        if [ "${CONTAINER_LABELS}" != "" ]; then
-            f_make_conf ${container}
-        fi
-    done
+    rm -rf /etc/s6.d/watch_docker
 fi
 
 f_log INF "Apply permissions"

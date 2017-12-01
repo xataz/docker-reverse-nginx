@@ -1,9 +1,9 @@
-FROM xataz/alpine:3.6
+FROM xataz/alpine:3.7
 
 LABEL Description="reverse with nginx based on alpine" \
       tags="latest mainline 1.13.7 1.13 1.0.1 1.0 1" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="2017112701"
+      build_ver="2017120201"
 
 ARG NGINX_VER=1.13.7
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
