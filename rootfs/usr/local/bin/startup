@@ -34,7 +34,6 @@ mkdir -p /nginx/sites-enabled /nginx /nginx/log /nginx/run /nginx/sites-enabled 
 # Generate nginx configuration
 f_log INF "Generate SSL configuration"
 sed -i "s/<ssl_protocols>/${TLS_VERSIONS}/" /nginx/conf.d/ssl.conf
-sed -i 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
 sed -i "s/<ecdh_curve>/${ECDH_CURVE}/" /nginx/conf.d/ssl.conf
 
 # Download OCSP

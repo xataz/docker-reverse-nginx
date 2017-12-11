@@ -113,6 +113,7 @@ f_make_conf() {
     FRONTEND_HSTS=enable
     FRONTEND_OCSP=enable
     FRONTEND_CT=disable
+    FRONTEND_CIPHER=${CIPHER_SUITE}
 
     export reverse_frontend_domain=${FRONTEND_DOMAIN}
     export reverse_frontend_path=${FRONTEND_PATH}
@@ -124,6 +125,7 @@ f_make_conf() {
     export reverse_frontend_hsts=${FRONTEND_HSTS}
     export reverse_frontend_ocsp=${FRONTEND_OCSP}
     export reverse_frontend_ct=${FRONTEND_CT}
+    export reverse_frontend_cipher=${FRONTEND_CIPHER}
 
     container_name=$1
     OLD_IFS=${IFS}
@@ -168,6 +170,12 @@ f_make_conf() {
                     VALUE=$(echo ${label} | awk '{print $2}')
                     export $(echo ${KEY}=${VALUE})
                 ;;
+                "reverse.frontend.cipher")
+                    FRONTEND_CIPHER="$(echo ${label} | awk '{print $2}')"
+                    KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
+                    VALUE=$(echo ${label} | awk '{print $2}')
+                    export $(echo ${KEY}=${VALUE})
+                ;;
                 "reverse.backend.port")
                     BACKEND_PORT="$(echo ${label} | awk '{print $2}')"
                     KEY=$(echo ${label} | awk '{print $1}' | tr '.' '_')
@@ -205,6 +213,7 @@ f_make_conf() {
         f_log INF "             ssl=${FRONTEND_SSL}"
         if [ "${FRONTEND_SSL}" == "true" ] || [ "${FRONTEND_SSL}" == "enable" ]; then 
                 f_log INF "             ssl_type=${FRONTEND_SSLTYPE}"
+                f_log INF "             cipher=${FRONTEND_CIPHER}"
                 f_log INF "             hsts=${FRONTEND_HSTS}"
                 f_log INF "             ocsp=${FRONTEND_OCSP}"
                 f_log INF "             ct=${FRONTEND_CT}"
