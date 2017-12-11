@@ -141,7 +141,7 @@ ENV UID=991 \
     SWARM=disable \
     TLS_VERSIONS="TLSv1.1 TLSv1.2" \
     CIPHER_SUITE="EECDH+CHACHA20:EECDH+AESGCM" \
-    ECDH_CURVE="X25519:P-521:P-384"
+    ECDH_CURVE="X25519:P-521:P-384:P-256"
 
 ENTRYPOINT ["/usr/local/bin/startup"]
 CMD ["/bin/s6-svscan", "/etc/s6.d"]
