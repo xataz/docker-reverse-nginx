@@ -2,9 +2,17 @@
 
 DOMAIN=$1
 SSL_TYPE=$2
+template_lets=/templates/letsencrypt-temp.tmpl
 
 if [ ${SSL_TYPE} == "" ]; then
     SSL_TYPE=ec384
 fi
 
-/usr/local/bin/lego -a -m ${EMAIL} -d ${DOMAIN} --path /nginx/ssl --http :8080 --tls :8443 -k ${SSL_TYPE} run
+mkdir -p /nginx/www/${DOMAIN}
+gucci ${template_lets} > /nginx/sites-enabled/temp.conf
+nginx -s reload
+/usr/local/bin/lego -a -m ${EMAIL} -d ${DOMAIN} --path /nginx/ssl --webroot /nginx/www/${DOMAIN} -k ${SSL_TYPE} run
+[[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
+rm -rf /nginx/sites-enabled/temp.conf
+chown -R ${UID}:${GID} /nginx/ssl/
+nginx -s reload

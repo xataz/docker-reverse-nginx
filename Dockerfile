@@ -1,11 +1,11 @@
 FROM xataz/alpine:3.7
 
 LABEL Description="reverse with nginx based on alpine" \
-      tags="latest mainline 1.13.7 1.13 1.0.1 1.0 1" \
+      tags="latest mainline 1.13.8 1.13 1.0.1 1.0 1" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="2017120901"
+      build_ver="2018011301"
 
-ARG NGINX_VER=1.13.7
+ARG NGINX_VER=1.13.8
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
                A09CD539B8BB8CBE96E82BDFABD4D3B3F5806B4D \
                4C2C85E705DC730833990C38A9376139A524C53E \
@@ -77,8 +77,8 @@ RUN export BUILD_DEPS="build-base \
     && git clone https://github.com/openresty/headers-more-nginx-module --depth=1 /tmp/headers-more-nginx-module \
     && git clone https://github.com/bagder/libbrotli --depth=1 /tmp/libbrotli \
     && git clone https://github.com/google/ngx_brotli --depth=1 /tmp/ngx_brotli \
-    && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz -O /tmp/nginx-${NGINX_VER}.tar.gz \
-    && wget http://nginx.org/download/nginx-${NGINX_VER}.tar.gz.asc -O /tmp/nginx-${NGINX_VER}.tar.gz.asc \
+    && wget -q http://nginx.org/download/nginx-${NGINX_VER}.tar.gz -O /tmp/nginx-${NGINX_VER}.tar.gz \
+    && wget -q http://nginx.org/download/nginx-${NGINX_VER}.tar.gz.asc -O /tmp/nginx-${NGINX_VER}.tar.gz.asc \
     && wget -q https://www.openssl.org/source/openssl-${OPENSSL_VER}.tar.gz -O /tmp/openssl-${OPENSSL_VER}.tar.gz \
     && git clone https://github.com/grahamedgecombe/nginx-ct --depth=1 /tmp/nginx-ct \
     # Brotli
@@ -141,7 +141,7 @@ ENV UID=991 \
     SWARM=disable \
     TLS_VERSIONS="TLSv1.1 TLSv1.2" \
     CIPHER_SUITE="EECDH+CHACHA20:EECDH+AESGCM" \
-    ECDH_CURVE="X25519:P-521:P-384"
+    ECDH_CURVE="X25519:P-521:P-384:P-256"
 
 ENTRYPOINT ["/usr/local/bin/startup"]
 CMD ["/bin/s6-svscan", "/etc/s6.d"]

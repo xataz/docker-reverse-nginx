@@ -1,0 +1,9 @@
+server {
+    listen 8080;
+    server_name {{ .domain_name }};
+
+    location ~ /\.well-known/acme-challenge {
+        root /nginx/www/{{ .domain_name }};
+        allow all;
+    }
+}

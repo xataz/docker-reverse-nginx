@@ -75,13 +75,26 @@ f_gen_certs() {
     for domain_name in ${FRONTEND_DOMAIN}; do
         export domain_name
         if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
-            CERTFILE=/nginx/ssl/certificates/${domain_name}.crt
-            KEYFILE=/nginx/ssl/certificates/${domain_name}.key
             if [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ]; then
+                CERTFILE=/nginx/ssl/certificates/${domain_name}.crt
+                KEYFILE=/nginx/ssl/certificates/${domain_name}.key
+                template_lets=/templates/letsencrypt-temp.tmpl
                 mkdir -p /nginx/www/${domain_name}
-                /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
-                [[ $? == 0 ]] && chown -R ${UID}:${GID} /nginx/ssl/ || f_log ERR "New Certificate for ${domain_name} not generated"
-                [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
+                ps -ef | grep -v s6-supervise | grep -v grep | grep nginx > /dev/null 2>&1
+                if [ $? == 0 ]; then
+                    /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
+                    [[ $? == 0 ]] && chown -R ${UID}:${GID} /nginx/ssl/ || f_log ERR "New Certificate for ${domain_name} not generated"
+                    [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
+
+                else
+                    gucci ${template_lets} > /nginx/sites-enabled/temp.conf
+                    nginx -s reload
+                    /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --webroot /nginx/www/${domain_name} -k ${FRONTEND_SSLTYPE} run
+                    [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
+                    rm -rf /nginx/sites-enabled/temp.conf
+                    chown -R ${UID}:${GID} /nginx/ssl/
+                    nginx -s reload
+                fi
             fi
         fi
     done
@@ -218,43 +231,24 @@ f_make_conf() {
 
 
 f_remove_conf() {
-    FRONTEND_DOMAIN=()
-    FRONTEND_PATH="/"
-    FRONTEND_SSL=disable
-    FRONTEND_AUTH=""
+    PATH_FILES="/nginx/path.d/${1}"
+    SITE_FILES="/nginx/sites-enabled/${1}.conf"
+    NGINX_RELOAD=0
 
-    container_name=$1
-    IFS=$'\n' 
-    if [ "${CONTAINER_LABELS}" != "" ]; then
-        for label in ${CONTAINER_LABELS}; do
-            case "$(echo ${label} | awk '{print $1}')" in
-                "reverse.frontend.domain")
-                    FRONTEND_DOMAIN=()
-                    FRONTEND_DOMAIN=$(echo ${label} | awk '{print $2}' | sed 's/,/ /g')
-                ;;
-                "reverse.frontend.path")
-                    FRONTEND_PATH="$(echo ${label} | awk '{print $2}')"
-                ;;
-
-            esac
-        done
+    if [ -e ${PATH_FILES} ]; then
+        rm -rf ${PATH_FILES}
+        NGINX_RELOAD=1
+    fi
+    if [ -e ${SITE_FILES} ]; then
+        rm -rf ${SITE_FILES}
+        NGINX_RELOAD=1
     fi
 
-    for domain_name in ${FRONTEND_DOMAIN}; do
-        rm -f /nginx/sites-enabled/${domain_name}.conf
+    if [ ${NGINX_RELOAD} -eq 1 ]; then
+        f_log INF "$1 removed"
+        nginx -s reload
+    fi
 
-        if [ "${FRONTEND_PATH}" == "/" ]; then
-            rm -f /nginx/path.d/${domain_name}/base.conf
-            if [ -e /nginx/auth/${domain_name}/base.auth ]; then
-                rm -f /nginx/auth/${domain_name}/base.auth
-            fi
-        else
-            rm -f /nginx/path.d/${domain_name}/${FRONTEND_PATH}.conf
-            if [ -e /nginx/auth/${domain_name}/${FRONTEND_PATH}.auth ]; then
-                rm -f /nginx/auth/${domain_name}/${FRONTEND_PATH}.auth
-            fi
-        fi
-    done
 }
 
 
@@ -271,15 +265,11 @@ f_service_create() {
 }
 
 f_service_remove() {
-    CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${1} 2> /dev/null | jq '.Spec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-    if [ "${CONTAINER_LABELS}" == "" ]; then
-        CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${1} 2> /dev/null | jq '.Spec.TaskTemplate.ContainerSpec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-    fi
-    if [ "${CONTAINER_LABELS}" != "" ]; then
-        f_remove_conf ${1}
-        f_log INF "Service $1 removed"
-        nginx -s reload
-    fi    
+    LIST_DOMAINS=$(grep -rn $1 /nginx/path.d/ | cut -d: -f1 | cut -d/ -f4)
+    for domain in $LIST_DOMAINS; do
+        f_remove_conf $domain
+    done
+    
 }
 
 f_container_start() {
@@ -292,12 +282,10 @@ f_container_start() {
 }
 
 f_container_die() {
-    CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${1}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
-    if [ "${CONTAINER_LABELS}" != "" ]; then
-        f_remove_conf ${1}
-        f_log INF "Container $1 removed"
-        nginx -s reload
-    fi
+    LIST_DOMAINS=$(grep -rn $1 /nginx/path.d/ | cut -d: -f1 | cut -d/ -f4)
+    for domain in $LIST_DOMAINS; do
+        f_remove_conf $domain
+    done
 }
 
 f_analyze_line() {
