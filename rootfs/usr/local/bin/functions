@@ -221,9 +221,9 @@ f_make_conf() {
                 f_log INF "             ocsp=${FRONTEND_OCSP}"
                 f_log INF "             ct=${FRONTEND_CT}"
         fi
+        f_gen_certs ${container_name}
         f_gen_location ${container_name}
         f_gen_sites_enabled
-        f_gen_certs ${container_name}
         f_gen_scts ${container_name}
     fi
 }
