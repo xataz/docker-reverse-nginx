@@ -26,18 +26,21 @@ f_check_certs() {
         if [ $? == 0 ]; then
             f_log INF "Certificate for ${domain} is good for another 10 days!"
         else
-            f_log INF "Generate New Certificate for ${domain}"
-            /usr/local/bin/lego -a -m ${EMAIL} -d ${domain} --path /nginx/ssl --webroot /nginx/www/${domain} -k ${SSL_TYPE} renew
-            if [ $? == 0 ]; then
-                if [ -e ${CERTFILE} ]; then
-                    RELOAD_NGINX=1
-                    if [ -f ${SCTFILE} ]; then
-                        ct-submit ct.googleapis.com/pilot <${CERTFILE}>${SCTFILE}
+            grep -rn ${domain} /nginx/sites-enabled/*
+            if [ $? -eq 0 ]; then
+                f_log INF "Generate New Certificate for ${domain}"
+                /usr/local/bin/lego -a -m ${EMAIL} -d ${domain} --path /nginx/ssl --webroot /nginx/www/${domain} -k ${SSL_TYPE} renew
+                if [ $? == 0 ]; then
+                    if [ -e ${CERTFILE} ]; then
+                        RELOAD_NGINX=1
+                        if [ -f ${SCTFILE} ]; then
+                            ct-submit ct.googleapis.com/pilot <${CERTFILE}>${SCTFILE}
+                        fi
+                        f_log INF "New Certificate for ${domain} generated" 
                     fi
-                    f_log INF "New Certificate for ${domain} generated" 
+                else 
+                    f_log ERR "New Certificate for ${domain} not generated"
                 fi
-            else 
-                f_log ERR "New Certificate for ${domain} not generated"
             fi
         fi             
     done

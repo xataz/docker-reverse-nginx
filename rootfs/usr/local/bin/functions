@@ -87,12 +87,12 @@ f_gen_certs() {
                 else
                     template_lets=/templates/letsencrypt-temp.tmpl
                     gucci ${template_lets} > /nginx/sites-enabled/temp.conf
-                    nginx -s reload
+                    f_reload_nginx
                     /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --webroot /nginx/www/${domain_name} -k ${FRONTEND_SSLTYPE} run
                     [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
                     rm -rf /nginx/sites-enabled/temp.conf
                     chown -R ${UID}:${GID} /nginx/ssl/
-                    nginx -s reload
+                    f_reload_nginx
                 fi
             fi
         fi
@@ -112,6 +112,16 @@ f_gen_scts() {
             fi
         fi
     done
+}
+
+f_reload_nginx() {
+    f_log INF "Reload nginx"
+    nginx -s reload
+    if [ $? -ne 0 ]; then
+        f_log ERR "Error : Reload nginx Failed"
+    else
+        f_log INF "Reload nginx done"
+    fi
 }
 
 f_make_conf() {
@@ -245,7 +255,7 @@ f_remove_conf() {
 
     if [ ${NGINX_RELOAD} -eq 1 ]; then
         f_log INF "$1 removed"
-        nginx -s reload
+        f_reload_nginx
     fi
 
 }
@@ -257,9 +267,9 @@ f_service_create() {
         CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/services/${1} 2> /dev/null | jq '.Spec.TaskTemplate.ContainerSpec.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
     fi
     if [ "${CONTAINER_LABELS}" != "" ]; then
-        f_make_conf ${1}
         f_log INF "Service $1 created"
-        nginx -s reload
+        f_make_conf ${1}
+        f_reload_nginx
     fi    
 }
 
@@ -274,9 +284,9 @@ f_service_remove() {
 f_container_start() {
     CONTAINER_LABELS=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${1}/json 2> /dev/null | jq '.Config.Labels' | grep -E "reverse\." | sed 's|.*"\(.*\)": "\(.*\)".*$|\1 \2|')
     if [ "${CONTAINER_LABELS}" != "" ]; then
-        f_make_conf ${1}
         f_log INF "Container $1 created"
-        nginx -s reload
+        f_make_conf ${1}
+        f_reload_nginx
     fi    
 }
 
