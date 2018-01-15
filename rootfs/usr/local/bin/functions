@@ -80,7 +80,7 @@ f_gen_certs() {
             if [ ! -e ${CERTFILE} ] && [ ! -e ${KEYFILE} ]; then
                 mkdir -p /nginx/www/${domain_name}
                 ps -ef | grep -v s6-supervise | grep -v grep | grep nginx > /dev/null 2>&1
-                if [ $? == 0 ]; then
+                if [ $? -ne 0 ]; then
                     /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
                     [[ $? == 0 ]] && chown -R ${UID}:${GID} /nginx/ssl/ || f_log ERR "New Certificate for ${domain_name} not generated"
                     [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
