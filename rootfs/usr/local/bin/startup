@@ -9,14 +9,14 @@ if [ $? == 0 ]; then
     f_log INF "/var/run/docker.sock exist ..."
 else
     f_log ERR "/var/run/docker.sock don't exist ..."
-     
+    exit 1 
 fi
 
 
 f_log INF "Start reverse configuration ..."
 
 # Prepare container
-f_log INF "Create user 'reverse'"
+f_log INF "Create user 'reverse' ..."
 if [ "$(grep ':'${GID}':' /etc/group)" == "" ]; then
     addgroup -g ${GID} reverse
     GROUP_NAME=reverse
@@ -24,22 +24,26 @@ else
     GROUP_NAME=$(grep ':'${GID}':' /etc/group | cut -d: -f1)
     echo ${GROUP_NAME}
 fi
+f_log SUC "Create user 'reverse' done"
 
 if [ "$(grep ${UID} /etc/passwd)" == "" ]; then
     adduser -H -s /bin/sh -D -G ${GROUP_NAME} -u ${UID} reverse
 fi
-f_log INF "Create folder"
+f_log INF "Create folder ..."
 mkdir -p /nginx /nginx/log /nginx/run /nginx/sites-enabled /nginx/ssl/private
+f_log SUC "Create folder done"
 
 # Generate nginx configuration
-f_log INF "Generate SSL configuration"
+f_log INF "Generate SSL configuration ..."
 sed -i "s/<ssl_protocols>/${TLS_VERSIONS}/" /nginx/conf.d/ssl.conf
 sed -i 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
 sed -i "s/<ecdh_curve>/${ECDH_CURVE}/" /nginx/conf.d/ssl.conf
+f_log SUC "Generate SSL configuration done"
 
 # Download OCSP
-f_log INF "Download Letsencrypt Certs"
-rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/letsencrypt-certs.pem > /dev/null
+f_log INF "Download Letsencrypt Certs ..."
+rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/letsencrypt-certs.pem > /dev/null 2>&1
+f_log SUC "Download Letsencrypt Certs done"
 
 # Generate file
 if [ -e /var/run/docker.sock ]; then
@@ -66,11 +70,12 @@ else
     rm -rf /etc/s6.d/watch_docker
 fi
 
-f_log INF "Apply permissions"
+f_log INF "Apply permissions ..."
 chown -R ${UID}:${GID} /nginx /etc/s6.d
 chmod +x /usr/local/bin/*
 find /etc/s6.d -name run -exec chmod +x {} \;
 find /etc/s6.d -name finish -exec chmod +x {} \;
+f_log SUC "Apply permissions done"
 
 f_log SUC "End reverse configuration"
 

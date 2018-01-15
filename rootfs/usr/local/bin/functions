@@ -81,15 +81,16 @@ f_gen_certs() {
                 mkdir -p /nginx/www/${domain_name}
                 ps -ef | grep -v s6-supervise | grep -v grep | grep nginx > /dev/null 2>&1
                 if [ $? -ne 0 ]; then
-                    /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
-                    [[ $? == 0 ]] && chown -R ${UID}:${GID} /nginx/ssl/ || f_log ERR "New Certificate for ${domain_name} not generated"
-                    [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
+                    f_log INF "Generate Certificate for ${domain_name} ..."
+                    /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run > /tmp/lego.log 2>&1
+                    [[ $? == 0 ]] && f_log SUC "New Certificate for ${domain_name} generated" || (f_log ERR "New Certificate for ${domain_name} not generated" && cat /tmp/lego.log)
+                    chown -R ${UID}:${GID} /nginx/ssl/
                 else
                     template_lets=/templates/letsencrypt-temp.tmpl
                     gucci ${template_lets} > /nginx/sites-enabled/temp.conf
                     f_reload_nginx
-                    /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --webroot /nginx/www/${domain_name} -k ${FRONTEND_SSLTYPE} run
-                    [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
+                    /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --webroot /nginx/www/${domain_name} -k ${FRONTEND_SSLTYPE} run > /tmp/lego.log 2>&1
+                    [[ $? == 0 ]] && f_log SUC "New Certificate for ${domain_name} generated" || (f_log ERR "New Certificate for ${domain_name} not generated" && cat /tmp/lego.log)
                     rm -rf /nginx/sites-enabled/temp.conf
                     chown -R ${UID}:${GID} /nginx/ssl/
                     f_reload_nginx
@@ -120,7 +121,7 @@ f_reload_nginx() {
     if [ $? -ne 0 ]; then
         f_log ERR "Error : Reload nginx Failed"
     else
-        f_log INF "Reload nginx done"
+        f_log SUC "Reload nginx done"
     fi
 }
 
@@ -220,7 +221,7 @@ f_make_conf() {
             esac
         done
         IFS=${OLD_IFS}
-        f_log INF "Generate files for ${FRONTEND_DOMAIN}, with options :"
+        f_log INF "Generate configuration for ${FRONTEND_DOMAIN}, with options :"
         f_log INF "             path=${FRONTEND_PATH}"
         f_log INF "             auth=${FRONTEND_AUTH}" 
         f_log INF "             port=${BACKEND_PORT}"
@@ -235,6 +236,7 @@ f_make_conf() {
         f_gen_location ${container_name}
         f_gen_sites_enabled
         f_gen_scts ${container_name}
+        f_log SUC "Configuration for ${FRONTEND_DOMAIN} done"
     fi
 }
 
