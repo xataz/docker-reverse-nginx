@@ -75,18 +75,17 @@ f_gen_certs() {
     for domain_name in ${FRONTEND_DOMAIN}; do
         export domain_name
         if [[ "${FRONTEND_SSL}" == "enable" ]] || [[ "${FRONTEND_SSL}" == "true" ]]; then
-            if [ ! -e ${CERTFILE} ] || [ ! -e ${KEYFILE} ]; then
-                CERTFILE=/nginx/ssl/certificates/${domain_name}.crt
-                KEYFILE=/nginx/ssl/certificates/${domain_name}.key
-                template_lets=/templates/letsencrypt-temp.tmpl
+            CERTFILE=/nginx/ssl/certificates/${domain_name}.crt
+            KEYFILE=/nginx/ssl/certificates/${domain_name}.key
+            if [ ! -e ${CERTFILE} ] && [ ! -e ${KEYFILE} ]; then
                 mkdir -p /nginx/www/${domain_name}
                 ps -ef | grep -v s6-supervise | grep -v grep | grep nginx > /dev/null 2>&1
                 if [ $? == 0 ]; then
                     /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --http :8080 --tls :8443 -k ${FRONTEND_SSLTYPE} run
                     [[ $? == 0 ]] && chown -R ${UID}:${GID} /nginx/ssl/ || f_log ERR "New Certificate for ${domain_name} not generated"
                     [[ $? == 0 ]] && f_log INF "New Certificate for ${domain_name} generated" || f_log ERR "New Certificate for ${domain_name} not generated"
-
                 else
+                    template_lets=/templates/letsencrypt-temp.tmpl
                     gucci ${template_lets} > /nginx/sites-enabled/temp.conf
                     nginx -s reload
                     /usr/local/bin/lego -a -m ${EMAIL} -d ${domain_name} --path /nginx/ssl --webroot /nginx/www/${domain_name} -k ${FRONTEND_SSLTYPE} run
