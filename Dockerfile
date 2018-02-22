@@ -3,7 +3,7 @@ FROM xataz/alpine:3.7
 LABEL Description="reverse with nginx based on alpine" \
       tags="latest 1.13.9 1.13" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="201802210500"
+      build_ver="201802220331"
 
 ARG NGINX_VER=1.13.9
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
