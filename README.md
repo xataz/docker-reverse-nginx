@@ -54,13 +54,13 @@ docker build -t xataz/reverse-nginx --build-arg NGINX_VER=1.9.5 github.com/xataz
 * GID : Choose gid for launch nginx (default : 991) (Use local docker group id)
 * EMAIL : Mail address for letsencrypt
 * SWARM : enable if use this reverse with docker swarm mode (default : disable)
-* TLS_VERSION : Choose tls version separate by space (default : "TLSv1.1 TLSv1.2")
+* TLS_VERSIONS : Choose tls version separate by space (default : "TLSv1.1 TLSv1.2")
 * CIPHER_SUITE : Choose cipher suite (default : "EECDH+CHACHA20:EECDH+AESGCM")
 * ECDH_CURVE : Choose ecdh curve (default : "X25519:P-521:P-384")
 
 ### Volumes
 * /nginx/ssl : For certificate persistance
-* /nginx/sites_enabled : Warning, this file can be delete if restart container
+* /nginx/sites-enabled : Warning, this file can be delete if restart container
 * /nginx/path.d : Warning, this file can be delete if restart container 
 * /nginx/custom_sites : For create your own sites
 
