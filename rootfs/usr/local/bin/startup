@@ -40,6 +40,11 @@ sed -i 's/<cipher_suite>/'${CIPHER_SUITE}'/' /nginx/conf.d/ssl.conf
 sed -i "s/<ecdh_curve>/${ECDH_CURVE}/" /nginx/conf.d/ssl.conf
 f_log SUC "Generate SSL configuration done"
 
+# Configure default site
+if [[ "${DEFAULT_SITE,,}" == "false" ]] || [[ "${DEFAULT_SITE,,}" == "disable" ]]; then
+    rm -f /nginx/sites-enabled/default.conf
+fi
+
 # Download OCSP
 f_log INF "Download Letsencrypt Certs ..."
 rm -f /nginx/ssl/private/ocsp-certs.pem && wget -O- https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem https://letsencrypt.org/certs/lets-encrypt-x4-cross-signed.pem | tee -a /nginx/ssl/private/letsencrypt-certs.pem > /dev/null 2>&1
