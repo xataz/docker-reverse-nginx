@@ -26,7 +26,7 @@ f_check_certs() {
         if [ $? == 0 ]; then
             f_log INF "Certificate for ${domain} is good for another 10 days!"
         else
-            grep -rn ${domain} /nginx/sites-enabled/*
+            grep -rn ${domain} /nginx/sites-enabled/* > /dev/null 2>&1
             if [ $? -eq 0 ]; then
                 f_log INF "Generate New Certificate for ${domain}"
                 /usr/local/bin/lego -a -m ${EMAIL} -d ${domain} --path /nginx/ssl --webroot /nginx/www/${domain} -k ${SSL_TYPE} renew
