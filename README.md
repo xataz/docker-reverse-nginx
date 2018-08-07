@@ -38,6 +38,8 @@ Reverse-nginx generate for you the configuration of reverse proxy. Like traefik,
 * NGINX_VER : Nginx version
 * ARG NGINX_GPG : GPG fingerprint (default : "B0F4253373F8F6F510D42178520A9993A1C052F8")
 * ARG BUILD_CORES : Number of core use for make nginx (default : All cores)
+* OPENSSL_VER : OpenSSL version
+* LEGO_VER : Lego version
 
 ### Simply build
 ```shell
