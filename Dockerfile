@@ -1,11 +1,11 @@
-FROM xataz/alpine:3.7
+FROM alpine:3.8
 
 LABEL Description="reverse with nginx based on alpine" \
-      tags="latest 1.15.0 1.15" \
+      tags="latest 1.15.2 1.15" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="201806190431"
+      build_ver="201808072020"
 
-ARG NGINX_VER=1.15.0
+ARG NGINX_VER=1.15.2
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
                A09CD539B8BB8CBE96E82BDFABD4D3B3F5806B4D \
                4C2C85E705DC730833990C38A9376139A524C53E \
@@ -40,7 +40,8 @@ ARG NGINX_CONF="--prefix=/nginx \
 ARG NGINX_3RD_PARTY_MODULES="--add-module=/tmp/headers-more-nginx-module \
                             --add-module=/tmp/nginx-ct \
                             --add-module=/tmp/ngx_brotli"
-ARG OPENSSL_VER=1.1.0g
+ARG OPENSSL_VER=1.1.0h
+ARG LEGO_VER=v0.5.0
 
 RUN export BUILD_DEPS="build-base \
                     pcre-dev \
@@ -58,6 +59,7 @@ RUN export BUILD_DEPS="build-base \
                     linux-headers \
                     jemalloc-dev" \
     && NB_CORES=${BUILD_CORES-$(grep -c "processor" /proc/cpuinfo)} \
+    && apk upgrade --no-cache \
     && apk add --no-cache ${BUILD_DEPS} \
                 s6 \
                 su-exec \
@@ -118,7 +120,9 @@ RUN export BUILD_DEPS="build-base \
     && export GOPATH=/tmp/go \
     && export GOBIN=$GOPATH/bin \
     && git config --global http.https://gopkg.in.followRedirects true \
-    && go get github.com/xenolf/lego \
+    && git clone -b ${LEGO_VER} https://github.com/xenolf/lego /tmp/go/src/github.com/xenolf/lego \
+    && if [ "${LEGO_VER}" == "v0.5.0" ]; then sed -i '70s/record/egoscale.UpdateDNSRecord(record)/' /tmp/go/src/github.com/xenolf/lego/providers/dns/exoscale/exoscale.go; fi \
+    && go get -v github.com/xenolf/lego \
     && mv /tmp/go/bin/lego /usr/local/bin/lego \
     # ct-submit
     && go get github.com/grahamedgecombe/ct-submit \
