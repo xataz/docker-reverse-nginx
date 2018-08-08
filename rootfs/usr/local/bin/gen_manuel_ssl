@@ -10,6 +10,7 @@ if [ ${SSL_TYPE} == "" ]; then
     SSL_TYPE=ec384
 fi
 
+export domain_name=$DOMAIN
 mkdir -p /nginx/www/${DOMAIN}
 gucci ${template_lets} > /nginx/sites-enabled/temp.conf
 f_reload_nginx
