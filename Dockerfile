@@ -1,11 +1,11 @@
 FROM alpine:3.8
 
 LABEL Description="reverse with nginx based on alpine" \
-      tags="latest 1.15.2 1.15" \
+      tags="latest 1.15.7 1.15" \
       maintainer="xataz <https://github.com/xataz>" \
-      build_ver="201808072020"
+      build_ver="201812072230"
 
-ARG NGINX_VER=1.15.2
+ARG NGINX_VER=1.15.7
 ARG NGINX_GPG="573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
                A09CD539B8BB8CBE96E82BDFABD4D3B3F5806B4D \
                4C2C85E705DC730833990C38A9376139A524C53E \
@@ -40,7 +40,7 @@ ARG NGINX_CONF="--prefix=/nginx \
 ARG NGINX_3RD_PARTY_MODULES="--add-module=/tmp/headers-more-nginx-module \
                             --add-module=/tmp/nginx-ct \
                             --add-module=/tmp/ngx_brotli"
-ARG OPENSSL_VER=1.1.0h
+ARG OPENSSL_VER=1.1.1a
 ARG LEGO_VER=v0.5.0
 
 RUN export BUILD_DEPS="build-base \
@@ -92,7 +92,7 @@ RUN export BUILD_DEPS="build-base \
     && make -j ${NB_CORES} \
     && make install \
     && cd /tmp/ngx_brotli \
-    && git submodule update --init \
+    && git submodule update --init \ 
     # OpenSSL
     && cd /tmp \
     && tar xzf openssl-${OPENSSL_VER}.tar.gz \
@@ -106,8 +106,6 @@ RUN export BUILD_DEPS="build-base \
     && gpg --batch --verify nginx-${NGINX_VER}.tar.gz.asc nginx-${NGINX_VER}.tar.gz \
     && tar xzf nginx-${NGINX_VER}.tar.gz \
     && cd /tmp/nginx-${NGINX_VER} \
-    && wget -q https://raw.githubusercontent.com/cujanovic/nginx-dynamic-tls-records-patch/master/nginx__dynamic_tls_records_1.13.0%2B.patch -O dynamic_records.patch \
-    && patch -p1 < dynamic_records.patch \
     && ./configure ${NGINX_CONF} ${NGINX_3RD_PARTY_MODULES} \
                         --with-cc-opt="-O3 -fPIE -fstack-protector-strong -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security -Wno-deprecated-declarations" \
                         --with-ld-opt="-lrt -ljemalloc -Wl,-Bsymbolic-functions -Wl,-z,relro" \
