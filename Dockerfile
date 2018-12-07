@@ -41,7 +41,7 @@ ARG NGINX_3RD_PARTY_MODULES="--add-module=/tmp/headers-more-nginx-module \
                             --add-module=/tmp/nginx-ct \
                             --add-module=/tmp/ngx_brotli"
 ARG OPENSSL_VER=1.1.1a
-ARG LEGO_VER=v0.5.0
+ARG LEGO_VER=v1.2.1
 
 RUN export BUILD_DEPS="build-base \
                     pcre-dev \
