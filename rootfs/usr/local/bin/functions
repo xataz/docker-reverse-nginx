@@ -58,7 +58,7 @@ f_gen_location() {
             mkdir -p /nginx/auth/${domain_name}
             export frontend_auth=${FRONTEND_AUTH}
             export frontend_path=${FRONTEND_PATH}
-            export backend_addr=${container_name}
+            export backend_addr=${BACKEND_HOSTNAME}
             export frontend_path=${FRONTEND_PATH}
             export backend_port=${BACKEND_PORT}
             export auth_file=${auth_file}
@@ -221,6 +221,9 @@ f_make_conf() {
             esac
         done
         IFS=${OLD_IFS}
+        THIS_CONTAINER_ID=$(hostname)
+        THIS_CONTAINER_NAME=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${THIS_CONTAINER_ID}/json 2> /dev/null | jq '.Name' | sed -e 's|.*"/\(.*\)"$|\1|')
+        BACKEND_HOSTNAME=$(curl --unix-socket /var/run/docker.sock http://localhost/containers/${THIS_CONTAINER_ID}/json 2> /dev/null | jq '.HostConfig.Links' | grep -E "/${THIS_CONTAINER_NAME}/" | grep ${container_name} | sed 's|.*/\(.*\)",*|\1|')
         f_log INF "Generate configuration for ${FRONTEND_DOMAIN}, with options :"
         f_log INF "             path=${FRONTEND_PATH}"
         f_log INF "             auth=${FRONTEND_AUTH}" 
